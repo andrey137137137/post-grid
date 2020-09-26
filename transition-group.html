@@ -7,6 +7,7 @@
     <style>
       .container {
         display: grid;
+        grid-auto-flow: dense;
         margin: 10px auto 0;
         width: 300px;
         height: 200px;
@@ -19,19 +20,24 @@
         box-sizing: border-box;
         border: 1px solid black;
       }
-      .cell-large {
+      .cell-large--md {
+        grid-row-end: 2 span;
+      }
+      .cell-large--lg {
+        grid-row-end: 2 span;
+        grid-column-end: 2 span;
+      }
+      .cell-large--xl {
         grid-row-end: 2 span;
         grid-column-end: 2 span;
       }
       .cell-move {
-        transition: transform 1s;
+        transition: all 1s;
       }
     </style>
   </head>
   <body>
-    <div id="sudoku-demo" class="demo">
-      <button ref="btn" @click="shuffle">Shuffle</button>
-
+    <div id="post-grid-demo" class="demo">
       <transition-group name="cell" tag="div" class="container" :style="columnSizeStyle">
         <div
           v-for="(cell, index) in cells"
@@ -46,21 +52,39 @@
 
     <script>
       new Vue({
-        el: "#sudoku-demo",
+        el: "#post-grid-demo",
         data: {
           totalWidth: 0,
           timeoutID: 0,
           rowSize: 3,
+          rowStep: 4,
+          cellStep: 6,
+          cellHeight: 100,
+          breakpoints: {
+            xl: 1200,
+            lg: 922,
+            md: 768,
+          },
           cells: [],
-          breakpoints: [768, 920],
         },
         computed: {
+          isLessThenMD: function () {
+            return this.totalWidth < this.breakpoints.md;
+          },
+          isLessThenLG: function () {
+            return this.totalWidth < this.breakpoints.lg;
+          },
+          isLessThenXL: function () {
+            return this.totalWidth < this.breakpoints.xl;
+          },
           columnSizeStyle: function () {
             return {
               "grid-template":
                 "repeat(" +
                 Math.ceil(this.cells.length / this.rowSize) * 2 +
-                ", 1fr) / repeat(" +
+                ", " +
+                this.cellHeight +
+                "px) / repeat(" +
                 this.rowSize +
                 ", 1fr)",
             };
@@ -68,18 +92,21 @@
         },
         methods: {
           isLargeCell: function (index) {
-            return index % 2 == 0 && index % this.rowSize == 0;
+            const isEven = index % 2 == 0;
+            const isThreeMultiple = index % 3 == 0;
+
+            if (!this.isLessThenXL) {
+              return isEven && isThreeMultiple;
+            } else {
+              return isThreeMultiple;
+            }
           },
           evenPreLargeStyle: function (index) {
-            const rowStep = 4;
-            const cellStep = 6;
-
-            if (!this.isLargeCell(index + 2)) {
-              return "";
-            }
+            if (this.isLessThenXL) return "";
+            if (!this.isLargeCell(index + 2)) return "";
 
             return {
-              "grid-row-start": Math.ceil(index / cellStep) * rowStep,
+              "grid-row-start": Math.ceil(index / this.cellStep) * this.rowStep,
               "grid-column-start": 1,
             };
           },
@@ -89,12 +116,24 @@
             return {
               cell: true,
               "cell-even-pre-large": false,
-              "cell-large": this.isLargeCell(index) || this.isLargeCell(nextIndex),
+              "cell-large--md": !this.isLessThenMD && this.isLessThenLG && this.isLargeCell(index),
+              "cell-large--lg": !this.isLessThenLG && this.isLessThenXL && this.isLargeCell(index),
+              "cell-large--xl":
+                !this.isLessThenXL && (this.isLargeCell(index) || this.isLargeCell(nextIndex)),
             };
           },
-          shuffle: function () {
+          restructe: function () {
             this.totalWidth = window.innerWidth;
-            this.cells = _.shuffle(this.cells);
+
+            if (this.totalWidth >= this.breakpoints.xl) {
+              this.rowSize = 3;
+            } else if (this.totalWidth >= this.breakpoints.lg) {
+              this.rowSize = 2;
+            } else if (this.totalWidth >= this.breakpoints.md) {
+              this.rowSize = 1;
+            } else {
+              this.rowSize = 1;
+            }
           },
         },
         created() {
@@ -152,9 +191,11 @@
               clearTimeout($vm.timeoutID);
             }
             $vm.timeoutID = setTimeout(function () {
-              $vm.shuffle();
+              $vm.restructe();
             }, 200);
           });
+
+          $vm.restructe();
         },
       });
     </script>
