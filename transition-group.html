@@ -6,43 +6,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.14.1/lodash.min.js"></script>
     <style>
       .container {
-        /* display: flex;
-        flex-flow: column wrap;
-        align-content: flex-start; */
         display: grid;
-        /* grid-template-areas:
-          "a a b"
-          "a a c"
-          "b a a"
-          "c a a"
-          "a a b"
-          "a a c"
-          "b a a"
-          "c a a"; */
-        /* grid-template: repeat(12, 1fr) / repeat(3, 1fr); */
+        margin: 10px auto 0;
         width: 300px;
-        /* height: 200px; */
-        margin-top: 10px;
+        height: 200px;
       }
       .cell {
-        /* grid-area: c; */
         position: relative;
-        box-sizing: border-box;
         display: flex;
         justify-content: space-around;
         align-items: center;
-        /* width: 100px;
-        height: 100px; */
+        box-sizing: border-box;
         border: 1px solid black;
       }
-      /* .cell-b {
-        height: 200px;
-        grid-area: b;
-      } */
       .cell-large {
-        /* width: 200px;
-        height: 200px; */
-        /* grid-area: a; */
         grid-row-end: 2 span;
         grid-column-end: 2 span;
       }
@@ -53,9 +30,6 @@
   </head>
   <body>
     <div id="sudoku-demo" class="demo">
-      <h1>Lazy Sudoku</h1>
-      <p>Keep hitting the shuffle button until you win.</p>
-
       <button ref="btn" @click="shuffle">Shuffle</button>
 
       <transition-group name="cell" tag="div" class="container" :style="columnSizeStyle">
@@ -71,22 +45,14 @@
     </div>
 
     <script>
-      // <transition-group
-      //   v-for="(block, index) in cells"
-      //   :key="index"
-      //   name="cell"
-      //   tag="div"
-      //   class="container"
-      // >
-      //   <div v-for="(cell, index) in block" :key="cell" :class="classes(index)">{{ cell }}</div>
-      // </transition-group>
-
       new Vue({
         el: "#sudoku-demo",
         data: {
+          totalWidth: 0,
           timeoutID: 0,
           rowSize: 3,
           cells: [],
+          breakpoints: [768, 920],
         },
         computed: {
           columnSizeStyle: function () {
@@ -102,60 +68,79 @@
         },
         methods: {
           isLargeCell: function (index) {
-            // return index > 0 && index % 2 == 0 && index % this.rowSize == 0;
             return index % 2 == 0 && index % this.rowSize == 0;
           },
           evenPreLargeStyle: function (index) {
             const rowStep = 4;
+            const cellStep = 6;
 
             if (!this.isLargeCell(index + 2)) {
               return "";
             }
 
             return {
-              "grid-row-start": Math.floor(index / rowStep) * rowStep,
+              "grid-row-start": Math.ceil(index / cellStep) * rowStep,
               "grid-column-start": 1,
             };
           },
           classes: function (index) {
-            const prevIndex = index - 1;
             const nextIndex = index + 1;
 
             return {
               cell: true,
               "cell-even-pre-large": false,
-              "cell-large":
-                // this.isLargeCell(prevIndex) || this.isLargeCell(nextIndex) ||
-                this.isLargeCell(index) || this.isLargeCell(nextIndex),
+              "cell-large": this.isLargeCell(index) || this.isLargeCell(nextIndex),
             };
           },
           shuffle: function () {
-            // for (let index = 0; index < this.cells.length; index++) {
-            //   this.$set(this.cells, index, _.shuffle(this.cells[index]));
-            // }
-
+            this.totalWidth = window.innerWidth;
             this.cells = _.shuffle(this.cells);
           },
         },
         created() {
-          const blocks = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-          // let row = 0;
-          // let isOddRow = true;
-          // let realIndex;
+          const blocks = [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+          ];
 
           for (let index = 0; index < blocks.length; index++) {
-            // if (!(index % this.rowSize)) {
-            //   this.$set(this.cells, row, []);
-            // }
-
-            // realIndex = index % this.rowSize;
-            // this.$set(this.cells[row], realIndex, blocks[index]);
-
-            // if (index > 0 && index % this.rowSize == this.rowSize - 1) {
-            //   isOddRow = !isOddRow;
-            //   row++;
-            // }
-
             this.cells.push(blocks[index]);
           }
         },
