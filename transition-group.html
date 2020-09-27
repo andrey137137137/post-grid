@@ -20,6 +20,9 @@
         box-sizing: border-box;
         border: 1px solid black;
       }
+      .cell-high {
+        grid-row-end: 2 span;
+      }
       .cell-large--md {
         grid-row-end: 2 span;
       }
@@ -38,14 +41,23 @@
   </head>
   <body>
     <div id="post-grid-demo" class="demo">
-      <transition-group name="cell" tag="div" class="container" :style="columnSizeStyle">
+      <transition-group
+        name="cell"
+        tag="div"
+        class="container"
+        :style="columnSizeStyle"
+      >
         <div
           v-for="(cell, index) in cells"
-          :key="cell"
+          :key="cell.key"
           :class="classes(index)"
           :style="evenPreLargeStyle(index)"
         >
-          {{ cell }}
+          <ul>
+            <li>key: {{ cell.key }}</li>
+            <li>sourceSize: {{ cell.sourceSize }}</li>
+            <li>calcSize: {{ cell.calcSize }}</li>
+          </ul>
         </div>
       </transition-group>
     </div>
@@ -109,7 +121,7 @@
           },
           evenPreLargeStyle: function (index) {
             if (this.isLessThenXL) return "";
-            if (!this.isLargeCell(index + 2)) return "";
+            if (!this.cells[index].preEvenLarge) return "";
 
             return {
               "grid-row-start": Math.ceil(index / this.cellStep) * this.rowStep,
@@ -119,11 +131,18 @@
           classes: function (index) {
             return {
               cell: true,
+              "cell-high":
+                !this.isLessThenXL && this.cells[index].calcSize == 2,
               "cell-large--md":
-                !this.isLessThenMD && this.isLessThenLG && this.cells[index].size > 2,
+                !this.isLessThenMD &&
+                this.isLessThenLG &&
+                this.cells[index].calcSize > 2,
               "cell-large--lg":
-                !this.isLessThenLG && this.isLessThenXL && this.cells[index].size > 2,
-              "cell-large--xl": !this.isLessThenXL && this.cells[index].size > 2,
+                !this.isLessThenLG &&
+                this.isLessThenXL &&
+                this.cells[index].calcSize > 2,
+              "cell-large--xl":
+                !this.isLessThenXL && this.cells[index].calcSize > 2,
             };
           },
           isLargeSizeByIndex: function (index) {
@@ -177,89 +196,137 @@
               this.rowSize = 1;
             }
           },
-        },
-        created() {
-          const sourceArray = [
-            { size: 2 },
-            { size: 4 },
-            { size: 1 },
-            { size: 4 },
-            { size: 1 },
-            { size: 1 },
-            { size: 4 },
-            { size: 1 },
-          ];
-          let toScaleDownLargeSizes = false;
-          let isNotFoundSize = false;
-          let findingSize;
-          let calcSize;
-          let isSmallSequence = false;
-          let curIndex = 0;
-          let sourceIndex;
-          let sourceArrayLength = sourceArray.length;
-          let sortedCount = 0;
+          restructe(sourceArray) {
+            this.config();
+            // this.totalWidth = this.breakpoints.lg;
+            // this.rowSize = 2;
 
-          this.config();
+            let toScaleDownLargeSizes = false;
+            let isNotFoundSize = false;
+            let findingSize;
+            let calcSize;
+            let isSmallSequence = false;
+            let smallCount = 0;
+            let realIndex = 0;
+            let sourceIndex;
+            let sourceArrayLength = sourceArray.length;
+            let sortedCount = 0;
 
-          while (sortedCount < sourceArrayLength) {
-            if (!isNotFoundSize) {
-              if (this.isLargeSizeByIndex(curIndex)) {
-                findingSize = 4;
-              } else if (isSmallSequence) {
-                isSmallSequence = false;
-                findingSize = 1;
+            for (let index = 0; index < sourceArrayLength; index++) {
+              sourceArray[index].sorted = false;
+            }
+
+            while (sortedCount < sourceArrayLength) {
+              if (!isNotFoundSize) {
+                if (this.isLargeSizeByIndex(smallCount)) {
+                  findingSize = 4;
+                } else if (isSmallSequence) {
+                  isSmallSequence = false;
+                  findingSize = 1;
+                } else {
+                  findingSize = 0;
+                }
               } else {
-                findingSize = 0;
-              }
-            } else {
-              sourceIndex = 0;
-              isNotFoundSize = false;
-            }
-
-            if (!findingSize) {
-              sourceIndex = 0;
-            } else {
-              sourceIndex = this.getFirstFoundIndex(findingSize);
-            }
-
-            for (; sourceIndex < sourceArrayLength; sourceIndex++) {
-              if (Object.prototype.hasOwnProperty.call(sourceArray[sourceIndex], "sorted")) {
-                continue;
+                sourceIndex = 0;
+                isNotFoundSize = false;
               }
 
-              if (!findingSize && sourceArray[sourceIndex].size < 3) {
-                findingSize = sourceArray[sourceIndex].size;
+              if (!findingSize) {
+                sourceIndex = 0;
+              } else {
+                sourceIndex = this.getFirstFoundIndex(findingSize);
+              }
 
-                if (findingSize == 1) {
-                  isSmallSequence = true;
+              for (; sourceIndex < sourceArrayLength; sourceIndex++) {
+                if (
+                  Object.prototype.hasOwnProperty.call(
+                    sourceArray[sourceIndex],
+                    "sorted"
+                  ) &&
+                  sourceArray[sourceIndex].sorted
+                ) {
+                  continue;
+                }
+
+                if (!findingSize && sourceArray[sourceIndex].sourceSize < 3) {
+                  findingSize = sourceArray[sourceIndex].sourceSize;
+
+                  if (findingSize == 1) {
+                    isSmallSequence = true;
+                  }
+                }
+
+                if (
+                  findingSize == sourceArray[sourceIndex].sourceSize ||
+                  toScaleDownLargeSizes
+                ) {
+                  if (!toScaleDownLargeSizes) {
+                    calcSize = sourceArray[sourceIndex].sourceSize;
+                  } else {
+                    calcSize =
+                      findingSize <= sourceArray[sourceIndex].sourceSize
+                        ? findingSize
+                        : sourceArray[sourceIndex].sourceSize;
+                  }
+
+                  if (findingSize == 2) {
+                    smallCount += 2;
+                  } else {
+                    smallCount++;
+                  }
+
+                  if (this.cells[realIndex]) {
+                    this.cells[realIndex].calcSize = calcSize;
+                    this.cells[realIndex].preEvenLarge = this.isLargeCell(
+                      smallCount + 2
+                    );
+                  } else {
+                    this.cells.push({
+                      key: ++this.cellID,
+                      sourceSize: sourceArray[sourceIndex].sourceSize,
+                      calcSize: calcSize,
+                      preEvenLarge: this.isLargeCell(smallCount + 2),
+                    });
+                  }
+
+                  this.resetFirstFoundIndex(findingSize);
+                  sourceArray[sourceIndex].sorted = true;
+                  sortedCount++;
+                  realIndex++;
+                  break;
+                } else {
+                  this.setFirstFoundIndex(
+                    sourceArray[sourceIndex].sourceSize,
+                    sourceIndex
+                  );
                 }
               }
 
-              if (findingSize == sourceArray[sourceIndex].size || toScaleDownLargeSizes) {
-                calcSize = toScaleDownLargeSizes ? findingSize : sourceArray[sourceIndex].size;
-
-                curIndex++;
-                sortedCount++;
-
-                this.cells.push({
-                  key: ++this.cellID,
-                  sourceSize: sourceArray[sourceIndex].size,
-                  calcSize: calcSize,
-                });
-
+              if (sourceIndex >= sourceArrayLength) {
+                toScaleDownLargeSizes = true;
+                isNotFoundSize = true;
                 this.resetFirstFoundIndex(findingSize);
-                sourceArray[sourceIndex].sorted = true;
-                break;
-              } else {
-                setFirstFoundIndex(sourceArray[sourceIndex].size, sourceIndex);
               }
             }
+          },
+        },
+        created() {
+          const sourceArray = [
+            { sourceSize: 2 },
+            { sourceSize: 4 },
+            { sourceSize: 1 },
+            { sourceSize: 4 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 4 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 2 },
+            { sourceSize: 4 },
+            { sourceSize: 1 },
+          ];
 
-            if (sourceIndex >= sourceArrayLength) {
-              toScaleDownLargeSizes = true;
-              isNotFoundSize = true;
-            }
-          }
+          this.restructe(sourceArray);
         },
         mounted() {
           $vm = this;
@@ -269,7 +336,7 @@
               clearTimeout($vm.timeoutID);
             }
             $vm.timeoutID = setTimeout(function () {
-              $vm.config();
+              $vm.restructe($vm.cells);
             }, 200);
           });
         },
