@@ -60,10 +60,16 @@
           rowStep: 4,
           cellStep: 6,
           cellHeight: 100,
+          cellID: -1,
           breakpoints: {
             xl: 1200,
             lg: 922,
             md: 768,
+          },
+          firstFoundIndexes: {
+            large: -1,
+            high: -1,
+            small: -1,
           },
           cells: [],
         },
@@ -111,18 +117,54 @@
             };
           },
           classes: function (index) {
-            const nextIndex = index + 1;
-
             return {
               cell: true,
-              "cell-even-pre-large": false,
-              "cell-large--md": !this.isLessThenMD && this.isLessThenLG && this.isLargeCell(index),
-              "cell-large--lg": !this.isLessThenLG && this.isLessThenXL && this.isLargeCell(index),
-              "cell-large--xl":
-                !this.isLessThenXL && (this.isLargeCell(index) || this.isLargeCell(nextIndex)),
+              "cell-large--md":
+                !this.isLessThenMD && this.isLessThenLG && this.cells[index].size > 2,
+              "cell-large--lg":
+                !this.isLessThenLG && this.isLessThenXL && this.cells[index].size > 2,
+              "cell-large--xl": !this.isLessThenXL && this.cells[index].size > 2,
             };
           },
-          restructe: function () {
+          isLargeSizeByIndex: function (index) {
+            if (this.isLessThenMD) {
+              return false;
+            }
+
+            if (this.isLessThenXL) {
+              return this.isLargeCell(index);
+            }
+
+            return this.isLargeCell(index) || this.isLargeCell(index + 1);
+          },
+          getSizeName: function (size) {
+            switch (size) {
+              case 1:
+                return "small";
+              case 2:
+                return "high";
+              default:
+                return "large";
+            }
+          },
+          resetFirstFoundIndex: function (size) {
+            this.firstFoundIndexes[this.getSizeName(size)] = -1;
+          },
+          setFirstFoundIndex: function (size, index) {
+            const prop = this.getSizeName(size);
+
+            if (this.firstFoundIndexes[prop] < 0) {
+              this.firstFoundIndexes[prop] = index;
+            }
+          },
+          getFirstFoundIndex: function (size) {
+            const prop = this.getSizeName(size);
+
+            if (this.firstFoundIndexes[prop] < 0) return 0;
+
+            return this.firstFoundIndexes[prop];
+          },
+          config: function () {
             this.totalWidth = window.innerWidth;
 
             if (this.totalWidth >= this.breakpoints.xl) {
@@ -137,50 +179,86 @@
           },
         },
         created() {
-          const blocks = [
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18,
-            19,
-            20,
-            21,
-            22,
-            23,
-            24,
-            25,
-            26,
-            27,
-            28,
-            29,
-            30,
-            31,
-            32,
-            33,
-            34,
-            35,
-            36,
-            37,
-            38,
+          const sourceArray = [
+            { size: 2 },
+            { size: 4 },
+            { size: 1 },
+            { size: 4 },
+            { size: 1 },
+            { size: 1 },
+            { size: 4 },
+            { size: 1 },
           ];
+          let toScaleDownLargeSizes = false;
+          let isNotFoundSize = false;
+          let findingSize;
+          let calcSize;
+          let isSmallSequence = false;
+          let curIndex = 0;
+          let sourceIndex;
+          let sourceArrayLength = sourceArray.length;
+          let sortedCount = 0;
 
-          for (let index = 0; index < blocks.length; index++) {
-            this.cells.push(blocks[index]);
+          this.config();
+
+          while (sortedCount < sourceArrayLength) {
+            if (!isNotFoundSize) {
+              if (this.isLargeSizeByIndex(curIndex)) {
+                findingSize = 4;
+              } else if (isSmallSequence) {
+                isSmallSequence = false;
+                findingSize = 1;
+              } else {
+                findingSize = 0;
+              }
+            } else {
+              sourceIndex = 0;
+              isNotFoundSize = false;
+            }
+
+            if (!findingSize) {
+              sourceIndex = 0;
+            } else {
+              sourceIndex = this.getFirstFoundIndex(findingSize);
+            }
+
+            for (; sourceIndex < sourceArrayLength; sourceIndex++) {
+              if (Object.prototype.hasOwnProperty.call(sourceArray[sourceIndex], "sorted")) {
+                continue;
+              }
+
+              if (!findingSize && sourceArray[sourceIndex].size < 3) {
+                findingSize = sourceArray[sourceIndex].size;
+
+                if (findingSize == 1) {
+                  isSmallSequence = true;
+                }
+              }
+
+              if (findingSize == sourceArray[sourceIndex].size || toScaleDownLargeSizes) {
+                calcSize = toScaleDownLargeSizes ? findingSize : sourceArray[sourceIndex].size;
+
+                curIndex++;
+                sortedCount++;
+
+                this.cells.push({
+                  key: ++this.cellID,
+                  sourceSize: sourceArray[sourceIndex].size,
+                  calcSize: calcSize,
+                });
+
+                this.resetFirstFoundIndex(findingSize);
+                sourceArray[sourceIndex].sorted = true;
+                break;
+              } else {
+                setFirstFoundIndex(sourceArray[sourceIndex].size, sourceIndex);
+              }
+            }
+
+            if (sourceIndex >= sourceArrayLength) {
+              toScaleDownLargeSizes = true;
+              isNotFoundSize = true;
+            }
           }
         },
         mounted() {
@@ -191,11 +269,9 @@
               clearTimeout($vm.timeoutID);
             }
             $vm.timeoutID = setTimeout(function () {
-              $vm.restructe();
+              $vm.config();
             }, 200);
           });
-
-          $vm.restructe();
         },
       });
     </script>
