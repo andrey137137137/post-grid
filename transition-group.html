@@ -5,20 +5,23 @@
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.14.1/lodash.min.js"></script>
     <style>
+      ul {
+        padding-left: 10px;
+        list-style-type: none;
+        list-style-position: inside;
+      }
       .container {
         display: grid;
         grid-auto-flow: dense;
         margin: 10px auto 0;
         width: 300px;
-        height: 200px;
         color: white;
       }
       .cell {
-        position: relative;
         display: flex;
-        justify-content: space-around;
         align-items: center;
         box-sizing: border-box;
+        border: 1px solid white;
       }
       .cell-small {
         border: 1px solid black;
@@ -78,7 +81,7 @@
         data: {
           totalWidth: 0,
           timeoutID: 0,
-          rowSize: 3,
+          cols: 3,
           rowStep: 4,
           cellStep: 6,
           cellHeight: 100,
@@ -96,6 +99,11 @@
           cells: [],
         },
         computed: {
+          cellsCountInBlock: function () {
+            if (this.isLessThenMD) return 1;
+            if (this.isLessThenLG) return 4;
+            return 6;
+          },
           isLessThenMD: function () {
             return this.totalWidth < this.breakpoints.md;
           },
@@ -109,11 +117,11 @@
             return {
               "grid-template":
                 "repeat(" +
-                Math.ceil(this.cells.length / this.rowSize) * 2 +
+                Math.ceil(this.cells.length / this.cols) * 2 +
                 ", " +
                 this.cellHeight +
                 "px) / repeat(" +
-                this.rowSize +
+                this.cols +
                 ", 1fr)",
             };
           },
@@ -203,19 +211,19 @@
             this.totalWidth = window.innerWidth;
 
             if (this.totalWidth >= this.breakpoints.xl) {
-              this.rowSize = 3;
+              this.cols = 3;
             } else if (this.totalWidth >= this.breakpoints.lg) {
-              this.rowSize = 2;
+              this.cols = 2;
             } else if (this.totalWidth >= this.breakpoints.md) {
-              this.rowSize = 1;
+              this.cols = 1;
             } else {
-              this.rowSize = 1;
+              this.cols = 1;
             }
           },
           restructe(sourceArray) {
             this.config();
             // this.totalWidth = this.breakpoints.lg;
-            // this.rowSize = 2;
+            // this.cols = 2;
 
             let toScaleDownLargeSizes = false;
             let isNotFoundSize = false;
@@ -223,41 +231,61 @@
             let findingSize;
             let calcSize;
             let isSmallSequence = false;
-            let smallCount = 0;
-            let realIndex = 0;
+            let smallsCount = 0;
             let sourceIndex;
             let sourceArrayLength = sourceArray.length;
             let sortedCount = 0;
 
-            let largeCount = 0;
-            let highCount = 0;
-            let cellCount = 0;
-            let rowCount = 0;
+            let largesCount = 0;
+            let highsCount = 0;
+            let cellsCount = 0;
+            let blocksCount = 0;
+            let lastBlock;
+            let restCells = 0;
+            let isIncompleteBlock;
+            let isIncompleteLarges;
 
             const tempArray = [];
 
-            for (let index = 0; index < sourceArrayLength; index++) {
-              switch (sourceArray[index].sourceSize) {
+            sourceArray.map(function (item) {
+              switch (item.sourceSize) {
                 case 2:
-                  highCount++;
+                  highsCount++;
                   break;
                 case 4:
-                  largeCount++;
+                  largesCount++;
               }
 
-              cellCount += sourceArray[index].sourceSize;
-              sourceArray[index].sorted = false;
-              tempArray.push(sourceArray[index]);
+              cellsCount += item.sourceSize;
+              item.sorted = false;
+              tempArray.push(item);
+            });
+
+            // smallsCount = sourceArrayLength - largesCount - highsCount;
+            blocksCount = Math.ceil(cellsCount / this.cellsCountInBlock);
+            isIncompleteBlock = !!(cellsCount % this.cellsCountInBlock);
+            isIncompleteLarges = largesCount < blocksCount;
+            lastBlock = blocksCount - 1;
+
+            if (isIncompleteBlock) {
+              restCells = cellsCount - lastBlock * this.cellsCountInBlock;
             }
 
-            // smallCount = sourceArrayLength - largeCount - highCount;
-            rowCount = Math.ceil(cellCount / this.rowSize);
+            console.log(sourceArrayLength);
+            console.log(cellsCount);
+            console.log(blocksCount);
+            console.log(lastBlock);
+            console.log(restCells);
+            console.log(isIncompleteBlock);
+            console.log(isIncompleteLarges);
+
+            const highIndexes = [];
 
             this.cells = [];
 
             while (sortedCount < sourceArrayLength) {
               if (!isNotFoundSize) {
-                if (this.isLargeSizeByIndex(smallCount)) {
+                if (this.isLargeSizeByIndex(smallsCount)) {
                   findingSize = 4;
                 } else if (isSmallSequence) {
                   isSmallSequence = false;
@@ -309,9 +337,9 @@
                   }
 
                   if (calcSize == 2) {
-                    smallCount += 2;
+                    smallsCount += 2;
                   } else {
-                    smallCount++;
+                    smallsCount++;
                   }
 
                   this.cells.push({
@@ -321,14 +349,13 @@
                     sourceSize: tempArray[sourceIndex].sourceSize,
                     calcSize: calcSize,
                     preEvenLarge: toSetPreEvenLarge
-                      ? this.isLargeCell(smallCount + 2)
+                      ? this.isLargeCell(smallsCount + 2)
                       : false,
                   });
 
                   this.resetFirstFoundIndex(findingSize);
                   tempArray[sourceIndex].sorted = true;
                   sortedCount++;
-                  realIndex++;
                   break;
                 } else {
                   this.setFirstFoundIndex(
@@ -353,12 +380,7 @@
             { sourceSize: 4 },
             { sourceSize: 1 },
             { sourceSize: 4 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
+            { sourceSize: 4 },
             { sourceSize: 4 },
             { sourceSize: 2 },
             { sourceSize: 4 },
@@ -366,6 +388,7 @@
             { sourceSize: 4 },
             { sourceSize: 1 },
             { sourceSize: 1 },
+            { sourceSize: 2 },
           ]);
         },
         mounted() {
