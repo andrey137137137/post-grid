@@ -64,7 +64,7 @@
           v-for="(cell, index) in cells"
           :key="cell.key"
           :class="classes(index)"
-          :style="evenPreLargeStyle(index)"
+          :style="evenBeforeLargeStyle(index)"
         >
           <ul>
             <li>key: {{ cell.key }}</li>
@@ -82,8 +82,7 @@
           totalWidth: 0,
           timeoutID: 0,
           cols: 3,
-          rowStep: 4,
-          cellStep: 6,
+          firstIndexBeforeEvenLarge: 4,
           cellHeight: 100,
           cellID: -1,
           breakpoints: {
@@ -96,6 +95,9 @@
             high: -1,
             small: -1,
           },
+          largesCount: 0,
+          highsCount: 0,
+          smallsCount: 0,
           cells: [],
         },
         computed: {
@@ -131,18 +133,18 @@
             const isEven = index % 2 == 0;
             const isThreeMultiple = index % 3 == 0;
 
-            if (!this.isLessThenXL) {
-              return isEven && isThreeMultiple;
-            } else {
-              return isThreeMultiple;
-            }
+            if (!this.isLessThenXL) return isEven && isThreeMultiple;
+
+            return isThreeMultiple;
           },
-          evenPreLargeStyle: function (index) {
+          evenBeforeLargeStyle: function (index) {
             if (this.isLessThenXL) return "";
-            if (!this.cells[index].preEvenLarge) return "";
+            if (!this.cells[index].beforeEvenLarge) return "";
 
             return {
-              "grid-row-start": Math.ceil(index / this.cellStep) * this.rowStep,
+              "grid-row-start":
+                Math.ceil(index / this.cellsCountInBlock) *
+                this.firstIndexBeforeEvenLarge,
               "grid-column-start": 1,
             };
           },
@@ -204,6 +206,11 @@
 
             return this.firstFoundIndexes[prop];
           },
+          getSize: function () {
+            if (this.largesCount) return 4;
+            if (this.highsCount) return 2;
+            return 1;
+          },
           isExist: function (obj, prop) {
             return Object.prototype.hasOwnProperty.call(obj, prop);
           },
@@ -227,33 +234,39 @@
 
             let toScaleDownLargeSizes = false;
             let isNotFoundSize = false;
-            let toSetPreEvenLarge = true;
+            let toSetBeforeEvenLarge = true;
+            let beforeEvenLarge;
             let findingSize;
             let calcSize;
             let isSmallSequence = false;
-            let smallsCount = 0;
+            let evenStepIndexesCount = 0;
             let sourceIndex;
             let sourceArrayLength = sourceArray.length;
             let sortedCount = 0;
 
-            let largesCount = 0;
-            let highsCount = 0;
-            let cellsCount = 0;
+            this.largesCount = 0;
+            this.highsCount = 0;
+            this.smallsCount = 0;
+
             let blocksCount = 0;
+            let cellsCount = 0;
             let lastBlock;
             let restCells = 0;
+            let cellIndex = 0;
+            let blockIndex = 0;
             let isIncompleteBlock;
             let isIncompleteLarges;
 
+            const $vm = this;
             const tempArray = [];
 
             sourceArray.map(function (item) {
               switch (item.sourceSize) {
-                case 2:
-                  highsCount++;
-                  break;
                 case 4:
-                  largesCount++;
+                  $vm.largesCount++;
+                  break;
+                case 2:
+                  $vm.highsCount++;
               }
 
               cellsCount += item.sourceSize;
@@ -261,10 +274,11 @@
               tempArray.push(item);
             });
 
-            // smallsCount = sourceArrayLength - largesCount - highsCount;
+            this.smallsCount =
+              sourceArrayLength - this.largesCount - this.highsCount;
             blocksCount = Math.ceil(cellsCount / this.cellsCountInBlock);
             isIncompleteBlock = !!(cellsCount % this.cellsCountInBlock);
-            isIncompleteLarges = largesCount < blocksCount;
+            isIncompleteLarges = this.largesCount < blocksCount;
             lastBlock = blocksCount - 1;
 
             if (isIncompleteBlock) {
@@ -285,19 +299,26 @@
 
             while (sortedCount < sourceArrayLength) {
               if (!isNotFoundSize) {
-                if (this.isLargeSizeByIndex(smallsCount)) {
-                  findingSize = 4;
+                if (this.isLargeSizeByIndex(evenStepIndexesCount)) {
+                  findingSize = this.getSize();
                 } else if (isSmallSequence) {
                   isSmallSequence = false;
+
+                  // if (this.smallsCount) {
                   findingSize = 1;
+                  // } else {
+                  //   findingSize = 2;
+                  // }
                 } else {
                   findingSize = 0;
                 }
               } else {
                 isNotFoundSize = false;
 
-                if (findingSize > 2) {
-                  toSetPreEvenLarge = false;
+                if (findingSize == 4) {
+                  toSetBeforeEvenLarge = false;
+                  findingSize = 2;
+                } else if (this.highsCount) {
                   findingSize = 2;
                 } else {
                   findingSize = 1;
@@ -318,8 +339,22 @@
                 if (!findingSize && tempArray[sourceIndex].sourceSize < 3) {
                   findingSize = tempArray[sourceIndex].sourceSize;
 
-                  if (findingSize == 1) {
+                  console.log(blockIndex);
+                  console.log(this.smallsCount);
+                  if (
+                    findingSize == 1 &&
+                    this.smallsCount > 1
+                    // &&
+                    // blockIndex < lastBlock
+                    // && isIncompleteBlock
+                  ) {
                     isSmallSequence = true;
+                  } else if (blockIndex >= lastBlock - 1) {
+                    if (isIncompleteBlock && !isIncompleteLarges) {
+                      findingSize = 2;
+                    }
+                    // isNotFoundSize = true;
+                    // continue;
                   }
                 }
 
@@ -329,6 +364,17 @@
                 ) {
                   if (!toScaleDownLargeSizes) {
                     calcSize = tempArray[sourceIndex].sourceSize;
+
+                    switch (findingSize) {
+                      case 4:
+                        this.largesCount--;
+                        break;
+                      case 2:
+                        this.highsCount--;
+                        break;
+                      case 1:
+                        this.smallsCount--;
+                    }
                   } else {
                     calcSize =
                       findingSize <= tempArray[sourceIndex].sourceSize
@@ -336,10 +382,14 @@
                         : tempArray[sourceIndex].sourceSize;
                   }
 
+                  beforeEvenLarge = toSetBeforeEvenLarge
+                    ? this.isLargeCell(evenStepIndexesCount + 2)
+                    : false;
+
                   if (calcSize == 2) {
-                    smallsCount += 2;
+                    evenStepIndexesCount += 2;
                   } else {
-                    smallsCount++;
+                    evenStepIndexesCount++;
                   }
 
                   this.cells.push({
@@ -348,12 +398,13 @@
                       : ++this.cellID,
                     sourceSize: tempArray[sourceIndex].sourceSize,
                     calcSize: calcSize,
-                    preEvenLarge: toSetPreEvenLarge
-                      ? this.isLargeCell(smallsCount + 2)
-                      : false,
+                    beforeEvenLarge: beforeEvenLarge,
                   });
 
-                  this.resetFirstFoundIndex(findingSize);
+                  cellIndex += calcSize;
+                  blockIndex = Math.floor(cellIndex / this.cellsCountInBlock);
+
+                  this.resetFirstFoundIndex(calcSize);
                   tempArray[sourceIndex].sorted = true;
                   sortedCount++;
                   break;
