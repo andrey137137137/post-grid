@@ -82,7 +82,7 @@
           totalWidth: 0,
           timeoutID: 0,
           cols: 3,
-          firstIndexBeforeEvenLarge: 4,
+          firstIndexBeforeEvenLarge: 7,
           cellHeight: 100,
           cellID: -1,
           breakpoints: {
@@ -98,6 +98,7 @@
           largesCount: 0,
           highsCount: 0,
           smallsCount: 0,
+          lastHighsCount: 0,
           cells: [],
         },
         computed: {
@@ -142,9 +143,7 @@
             if (!this.cells[index].beforeEvenLarge) return "";
 
             return {
-              "grid-row-start":
-                Math.ceil(index / this.cellsCountInBlock) *
-                this.firstIndexBeforeEvenLarge,
+              "grid-row-start": this.cells[index].beforeEvenLarge,
               "grid-column-start": 1,
             };
           },
@@ -211,6 +210,12 @@
             if (this.highsCount) return 2;
             return 1;
           },
+          getCompleteCellsCount: function (cells) {
+            return cells * 4 + cells * 2;
+          },
+          getBlocks: function (cells) {
+            return Math.ceil(cells / this.cellsCountInBlock);
+          },
           isExist: function (obj, prop) {
             return Object.prototype.hasOwnProperty.call(obj, prop);
           },
@@ -229,8 +234,6 @@
           },
           restructe(sourceArray) {
             this.config();
-            // this.totalWidth = this.breakpoints.lg;
-            // this.cols = 2;
 
             let toScaleDownLargeSizes = false;
             let isNotFoundSize = false;
@@ -247,7 +250,9 @@
             this.largesCount = 0;
             this.highsCount = 0;
             this.smallsCount = 0;
+            this.lastHighsCount = 0;
 
+            let mustBeCellsCount;
             let blocksCount = 0;
             let cellsCount = 0;
             let lastBlock;
@@ -256,6 +261,8 @@
             let blockIndex = 0;
             let isIncompleteBlock;
             let isIncompleteLarges;
+            let isIncompleteHighs;
+            let isIncompleteSmalls;
 
             const $vm = this;
             const tempArray = [];
@@ -267,6 +274,9 @@
                   break;
                 case 2:
                   $vm.highsCount++;
+                  break;
+                case 1:
+                  $vm.smallsCount++;
               }
 
               cellsCount += item.sourceSize;
@@ -274,11 +284,32 @@
               tempArray.push(item);
             });
 
-            this.smallsCount =
-              sourceArrayLength - this.largesCount - this.highsCount;
-            blocksCount = Math.ceil(cellsCount / this.cellsCountInBlock);
+            mustBeCellsCount = getCompleteCellsCount(this.largesCount);
+
+            if (cellsCount < mustBeCellsCount) {
+              isIncompleteSmalls = true;
+
+              blocksCount = getBlocks(
+                getCompleteCellsCount(this.smallsCount) +
+                  getCompleteCellsCount(this.highsCount)
+              );
+            } else {
+              blocksCount = getBlocks(cellsCount);
+            }
+
             isIncompleteBlock = !!(cellsCount % this.cellsCountInBlock);
             isIncompleteLarges = this.largesCount < blocksCount;
+
+            if (isIncompleteLarges && this.highsCount) {
+              const diff = blocksCount - this.largesCount;
+
+              if (diff <= this.highsCount) {
+                this.lastHighsCount = diff;
+              }
+
+              this.highsCount -= this.lastHighsCount;
+            }
+
             lastBlock = blocksCount - 1;
 
             if (isIncompleteBlock) {
@@ -299,10 +330,21 @@
 
             while (sortedCount < sourceArrayLength) {
               if (!isNotFoundSize) {
-                if (this.isLargeSizeByIndex(evenStepIndexesCount)) {
-                  findingSize = this.getSize();
+                if (
+                  this.largesCount &&
+                  this.isLargeSizeByIndex(evenStepIndexesCount)
+                ) {
+                  findingSize = 4;
+                } else if (
+                  isIncompleteLarges &&
+                  this.lastHighsCount &&
+                  this.isLargeSizeByIndex(evenStepIndexesCount)
+                ) {
+                  findingSize = 2;
                 } else if (isSmallSequence) {
-                  isSmallSequence = false;
+                  if (this.largesCount || this.highsCount) {
+                    isSmallSequence = false;
+                  }
 
                   // if (this.smallsCount) {
                   findingSize = 1;
@@ -349,13 +391,14 @@
                     // && isIncompleteBlock
                   ) {
                     isSmallSequence = true;
-                  } else if (blockIndex >= lastBlock - 1) {
-                    if (isIncompleteBlock && !isIncompleteLarges) {
-                      findingSize = 2;
-                    }
-                    // isNotFoundSize = true;
-                    // continue;
                   }
+                  // else if (blockIndex >= lastBlock - 1) {
+                  //   if (isIncompleteBlock && !isIncompleteLarges) {
+                  //     findingSize = 2;
+                  //   }
+                  //   // isNotFoundSize = true;
+                  //   // continue;
+                  // }
                 }
 
                 if (
@@ -427,19 +470,13 @@
         created() {
           this.restructe([
             { sourceSize: 1 },
-            { sourceSize: 2 },
-            { sourceSize: 4 },
-            { sourceSize: 1 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 2 },
-            { sourceSize: 4 },
-            { sourceSize: 1 },
-            { sourceSize: 4 },
             { sourceSize: 1 },
             { sourceSize: 1 },
-            { sourceSize: 2 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
           ]);
         },
         mounted() {
