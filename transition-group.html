@@ -99,7 +99,6 @@
           highsCount: 0,
           smallsCount: 0,
           lastHighsCount: 0,
-          isLastHigh: false,
           cells: [],
         },
         computed: {
@@ -144,7 +143,7 @@
             if (!this.cells[index].beforeEvenLarge) return "";
 
             return {
-              "grid-row-start": this.cells[index].beforeEvenLarge,
+              // "grid-row-start": this.cells[index].beforeEvenLarge,
               "grid-column-start": 1,
             };
           },
@@ -234,9 +233,9 @@
                 this.largesCount--;
                 break;
               case 2:
-                if (isLastHigh) {
+                if (this.isLastHigh) {
                   this.lastHighsCount--;
-                  isLastHigh = false;
+                  this.isLastHigh = false;
                 } else {
                   this.highsCount--;
                 }
@@ -363,18 +362,13 @@
               if (!isNotFoundSize) {
                 if (isSmallSequence) {
                   if (
-                    this.largesCount ||
-                    this.highsCount ||
-                    this.lastHighsCount
+                    this.smallsCount &&
+                    (this.largesCount || this.highsCount || this.lastHighsCount)
                   ) {
                     isSmallSequence = false;
                   }
 
-                  // if (this.smallsCount) {
                   soughtSize = 1;
-                  // } else {
-                  //   soughtSize = 2;
-                  // }
                 } else if (
                   (this.largesCount || this.lastHighsCount) &&
                   this.isLargeSizeByIndex(evenStepIndex)
@@ -426,8 +420,9 @@
                   console.log(this.smallsCount);
 
                   if (
-                    soughtSize == 1 &&
-                    this.smallsCount > 1
+                    soughtSize == 1
+                    // &&
+                    // this.smallsCount > 1
                     // &&
                     // blockIndex < lastBlock
                     // && isIncompleteBlock
@@ -447,20 +442,42 @@
                   soughtSize == tempArray[sourceIndex].sourceSize ||
                   toScaleDownLargeSizes
                 ) {
-                  if (!toScaleDownLargeSizes) {
+                  if (
+                    !toScaleDownLargeSizes ||
+                    soughtSize == tempArray[sourceIndex].sourceSize
+                  ) {
                     calcSize = tempArray[sourceIndex].sourceSize;
-                    this.decSizeCount(soughtSize);
                   } else {
-                    calcSize =
-                      soughtSize <= tempArray[sourceIndex].sourceSize
-                        ? soughtSize
-                        : tempArray[sourceIndex].sourceSize;
-                    this.decSizeCount(tempArray[sourceIndex].sourceSize);
+                    switch (tempArray[sourceIndex].sourceSize) {
+                      case 4:
+                        if (!isSmallSequence) {
+                          calcSize = 2;
+                        } else {
+                          if (
+                            this.largesCount ||
+                            this.highsCount ||
+                            this.lastHighsCount
+                          ) {
+                            isSmallSequence = false;
+                          }
+                          calcSize = 1;
+                        }
+                        break;
+                      default:
+                        if (!isSmallSequence) {
+                          isSmallSequence = true;
+                        }
+                        calcSize = 1;
+                    }
                   }
 
-                  beforeEvenLarge = toSetBeforeEvenLarge
-                    ? this.isLargeCell(evenStepIndex + 2)
-                    : false;
+                  if (toSetBeforeEvenLarge) {
+                    beforeEvenLarge = this.isLargeCell(evenStepIndex + 2)
+                      ? evenStepIndex
+                      : false;
+                  } else {
+                    beforeEvenLarge = false;
+                  }
 
                   if (calcSize == 2) {
                     evenStepIndex += 2;
@@ -480,6 +497,7 @@
                   cellIndex += calcSize;
                   blockIndex = Math.floor(cellIndex / this.cellsCountInBlock);
 
+                  this.decSizeCount(tempArray[sourceIndex].sourceSize);
                   this.resetFirstFoundIndex(calcSize);
                   tempArray[sourceIndex].sorted = true;
                   sortedCount++;
@@ -502,14 +520,28 @@
         },
         created() {
           this.restructe([
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
           ]);
         },
         mounted() {
