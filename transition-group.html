@@ -54,12 +54,7 @@
   </head>
   <body>
     <div id="post-grid-demo" class="demo">
-      <transition-group
-        name="cell"
-        tag="div"
-        class="container"
-        :style="columnSizeStyle"
-      >
+      <transition-group name="cell" tag="div" class="container" :style="columnSizeStyle">
         <div
           v-for="(cell, index) in cells"
           :key="cell.key"
@@ -153,18 +148,12 @@
               "cell-small": this.cells[index].sourceSize == 1,
               "cell-high--bg": this.cells[index].sourceSize == 2,
               "cell-large--bg": this.cells[index].sourceSize == 4,
-              "cell-high":
-                !this.isLessThenXL && this.cells[index].calcSize == 2,
+              "cell-high": !this.isLessThenXL && this.cells[index].calcSize == 2,
               "cell-large--md":
-                !this.isLessThenMD &&
-                this.isLessThenLG &&
-                this.cells[index].calcSize == 4,
+                !this.isLessThenMD && this.isLessThenLG && this.cells[index].calcSize == 4,
               "cell-large--lg":
-                !this.isLessThenLG &&
-                this.isLessThenXL &&
-                this.cells[index].calcSize == 4,
-              "cell-large--xl":
-                !this.isLessThenXL && this.cells[index].calcSize == 4,
+                !this.isLessThenLG && this.isLessThenXL && this.cells[index].calcSize == 4,
+              "cell-large--xl": !this.isLessThenXL && this.cells[index].calcSize == 4,
             };
           },
           isLargeSizeByIndex: function (index) {
@@ -289,9 +278,9 @@
             let restCells = 0;
             let cellIndex = 0;
             let blockIndex = 0;
-            let isIncompleteBlock;
-            let isIncompleteLarges;
-            let isIncompleteSmalls;
+            let isIncompleteBlock = false;
+            let isIncompleteLarges = false;
+            let isIncompleteSmalls = false;
 
             for (let index = 0; index < sourceArrayLength; index++) {
               switch (sourceArray[index].sourceSize) {
@@ -311,42 +300,46 @@
             }
 
             if (cellsCount < this.getCompleteCellsCount(this.largesCount)) {
-              const sourceLargesCount =
-                this.smallsCount || this.highsCount
-                  ? Math.ceil(this.smallsCount / 2) + this.highsCount
-                  : this.largesCount - 1;
-              const scaleDownLargesCount = this.largesCount - sourceLargesCount;
+              // const isEvenSmallsCount = this.smallsCount % 2;
+              const isEvenSmallsCount = 0;
+              const BlocksWithSmallsCount = Math.floor(this.smallsCount / 2) + this.highsCount;
+              const BlocksWithLargesCount = Math.ceil(
+                (this.largesCount - BlocksWithSmallsCount) / 2,
+              );
+
+              blocksCount = BlocksWithSmallsCount + BlocksWithLargesCount + isEvenSmallsCount;
 
               isIncompleteSmalls = true;
+              isIncompleteBlock = !!isEvenSmallsCount;
             } else {
               blocksCount = this.getBlocks(cellsCount);
-            }
 
-            if (this.largesCount || this.highsCount) {
-              isIncompleteLarges = this.largesCount < blocksCount;
+              if (this.largesCount || this.highsCount) {
+                isIncompleteLarges = this.largesCount < blocksCount;
 
-              if (isIncompleteLarges && this.highsCount) {
-                const diff = blocksCount - this.largesCount;
+                if (isIncompleteLarges && this.highsCount) {
+                  const diff = blocksCount - this.largesCount;
 
-                if (diff <= this.highsCount) {
-                  this.lastHighsCount = diff;
-                } else {
-                  this.lastHighsCount = this.highsCount;
+                  if (diff <= this.highsCount) {
+                    this.lastHighsCount = diff;
+                  } else {
+                    this.lastHighsCount = this.highsCount;
+                  }
+
+                  this.highsCount -= this.lastHighsCount;
                 }
-
-                this.highsCount -= this.lastHighsCount;
+              } else {
+                toSetBeforeEvenLarge = false;
               }
-            } else {
-              toSetBeforeEvenLarge = false;
+
+              isIncompleteBlock = !!(cellsCount % this.cellsCountInBlock);
+
+              if (isIncompleteBlock) {
+                restCells = cellsCount - lastBlock * this.cellsCountInBlock;
+              }
             }
 
             lastBlock = blocksCount - 1;
-
-            isIncompleteBlock = !!(cellsCount % this.cellsCountInBlock);
-
-            if (isIncompleteBlock) {
-              restCells = cellsCount - lastBlock * this.cellsCountInBlock;
-            }
 
             console.log(sourceArrayLength);
             console.log(cellsCount);
@@ -356,6 +349,7 @@
             console.log(isIncompleteBlock);
             console.log(isIncompleteLarges);
 
+            cellsCount = 0;
             this.cells = [];
 
             while (sortedCount < sourceArrayLength) {
@@ -416,8 +410,8 @@
                 if (!soughtSize && tempArray[sourceIndex].sourceSize < 3) {
                   soughtSize = tempArray[sourceIndex].sourceSize;
 
-                  console.log(blockIndex);
-                  console.log(this.smallsCount);
+                  // console.log(blockIndex);
+                  // console.log(this.smallsCount);
 
                   if (
                     soughtSize == 1
@@ -438,14 +432,8 @@
                   // }
                 }
 
-                if (
-                  soughtSize == tempArray[sourceIndex].sourceSize ||
-                  toScaleDownLargeSizes
-                ) {
-                  if (
-                    !toScaleDownLargeSizes ||
-                    soughtSize == tempArray[sourceIndex].sourceSize
-                  ) {
+                if (soughtSize == tempArray[sourceIndex].sourceSize || toScaleDownLargeSizes) {
+                  if (!toScaleDownLargeSizes || soughtSize == tempArray[sourceIndex].sourceSize) {
                     calcSize = tempArray[sourceIndex].sourceSize;
                   } else {
                     switch (tempArray[sourceIndex].sourceSize) {
@@ -453,11 +441,7 @@
                         if (!isSmallSequence) {
                           calcSize = 2;
                         } else {
-                          if (
-                            this.largesCount ||
-                            this.highsCount ||
-                            this.lastHighsCount
-                          ) {
+                          if (this.largesCount || this.highsCount || this.lastHighsCount) {
                             isSmallSequence = false;
                           }
                           calcSize = 1;
@@ -472,9 +456,7 @@
                   }
 
                   if (toSetBeforeEvenLarge) {
-                    beforeEvenLarge = this.isLargeCell(evenStepIndex + 2)
-                      ? evenStepIndex
-                      : false;
+                    beforeEvenLarge = this.isLargeCell(evenStepIndex + 2) ? evenStepIndex : false;
                   } else {
                     beforeEvenLarge = false;
                   }
@@ -494,6 +476,7 @@
                     beforeEvenLarge: beforeEvenLarge,
                   });
 
+                  cellsCount += calcSize;
                   cellIndex += calcSize;
                   blockIndex = Math.floor(cellIndex / this.cellsCountInBlock);
 
@@ -503,10 +486,7 @@
                   sortedCount++;
                   break;
                 } else {
-                  this.setFirstFoundIndex(
-                    tempArray[sourceIndex].sourceSize,
-                    sourceIndex
-                  );
+                  this.setFirstFoundIndex(tempArray[sourceIndex].sourceSize, sourceIndex);
                 }
               }
 
@@ -525,23 +505,8 @@
             { sourceSize: 4 },
             { sourceSize: 4 },
             { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
+            { sourceSize: 2 },
+            { sourceSize: 1 },
           ]);
         },
         mounted() {
