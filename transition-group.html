@@ -54,7 +54,12 @@
   </head>
   <body>
     <div id="post-grid-demo" class="demo">
-      <transition-group name="cell" tag="div" class="container" :style="columnSizeStyle">
+      <transition-group
+        name="cell"
+        tag="div"
+        class="container"
+        :style="columnSizeStyle"
+      >
         <div
           v-for="(cell, index) in cells"
           :key="cell.key"
@@ -148,12 +153,18 @@
               "cell-small": this.cells[index].sourceSize == 1,
               "cell-high--bg": this.cells[index].sourceSize == 2,
               "cell-large--bg": this.cells[index].sourceSize == 4,
-              "cell-high": !this.isLessThenXL && this.cells[index].calcSize == 2,
+              "cell-high":
+                !this.isLessThenXL && this.cells[index].calcSize == 2,
               "cell-large--md":
-                !this.isLessThenMD && this.isLessThenLG && this.cells[index].calcSize == 4,
+                !this.isLessThenMD &&
+                this.isLessThenLG &&
+                this.cells[index].calcSize == 4,
               "cell-large--lg":
-                !this.isLessThenLG && this.isLessThenXL && this.cells[index].calcSize == 4,
-              "cell-large--xl": !this.isLessThenXL && this.cells[index].calcSize == 4,
+                !this.isLessThenLG &&
+                this.isLessThenXL &&
+                this.cells[index].calcSize == 4,
+              "cell-large--xl":
+                !this.isLessThenXL && this.cells[index].calcSize == 4,
             };
           },
           isLargeSizeByIndex: function (index) {
@@ -300,17 +311,20 @@
             }
 
             if (cellsCount < this.getCompleteCellsCount(this.largesCount)) {
-              // const isEvenSmallsCount = this.smallsCount % 2;
-              const isEvenSmallsCount = 0;
-              const BlocksWithSmallsCount = Math.floor(this.smallsCount / 2) + this.highsCount;
-              const BlocksWithLargesCount = Math.ceil(
-                (this.largesCount - BlocksWithSmallsCount) / 2,
+              const BlocksWithSmallsNHighsCount =
+                Math.floor(this.smallsCount / 2) + this.highsCount;
+              const scalingDownLargesCount = Math.ceil(
+                (this.largesCount - BlocksWithSmallsNHighsCount) / 2
               );
+              console.log(this.largesCount);
+              console.log(BlocksWithSmallsNHighsCount);
+              console.log(scalingDownLargesCount);
 
-              blocksCount = BlocksWithSmallsCount + BlocksWithLargesCount + isEvenSmallsCount;
+              blocksCount =
+                BlocksWithSmallsNHighsCount + scalingDownLargesCount;
 
               isIncompleteSmalls = true;
-              isIncompleteBlock = !!isEvenSmallsCount;
+              // isIncompleteBlock = !!isEvenSmallsCount;
             } else {
               blocksCount = this.getBlocks(cellsCount);
 
@@ -389,7 +403,7 @@
                 if (soughtSize == 4) {
                   toSetBeforeEvenLarge = false;
                   soughtSize = 2;
-                } else if (this.highsCount) {
+                } else if (!isSmallSequence && this.highsCount) {
                   soughtSize = 2;
                 } else {
                   soughtSize = 1;
@@ -432,16 +446,30 @@
                   // }
                 }
 
-                if (soughtSize == tempArray[sourceIndex].sourceSize || toScaleDownLargeSizes) {
-                  if (!toScaleDownLargeSizes || soughtSize == tempArray[sourceIndex].sourceSize) {
+                if (
+                  soughtSize == tempArray[sourceIndex].sourceSize ||
+                  toScaleDownLargeSizes
+                ) {
+                  if (
+                    !toScaleDownLargeSizes ||
+                    soughtSize == tempArray[sourceIndex].sourceSize
+                  ) {
                     calcSize = tempArray[sourceIndex].sourceSize;
+
+                    if (toScaleDownLargeSizes) {
+                      toScaleDownLargeSizes = false;
+                    }
                   } else {
                     switch (tempArray[sourceIndex].sourceSize) {
                       case 4:
                         if (!isSmallSequence) {
                           calcSize = 2;
                         } else {
-                          if (this.largesCount || this.highsCount || this.lastHighsCount) {
+                          if (
+                            this.largesCount ||
+                            this.highsCount ||
+                            this.lastHighsCount
+                          ) {
                             isSmallSequence = false;
                           }
                           calcSize = 1;
@@ -453,10 +481,16 @@
                         }
                         calcSize = 1;
                     }
+
+                    if (toScaleDownLargeSizes) {
+                      toScaleDownLargeSizes = false;
+                    }
                   }
 
                   if (toSetBeforeEvenLarge) {
-                    beforeEvenLarge = this.isLargeCell(evenStepIndex + 2) ? evenStepIndex : false;
+                    beforeEvenLarge = this.isLargeCell(evenStepIndex + 2)
+                      ? evenStepIndex
+                      : false;
                   } else {
                     beforeEvenLarge = false;
                   }
@@ -486,7 +520,10 @@
                   sortedCount++;
                   break;
                 } else {
-                  this.setFirstFoundIndex(tempArray[sourceIndex].sourceSize, sourceIndex);
+                  this.setFirstFoundIndex(
+                    tempArray[sourceIndex].sourceSize,
+                    sourceIndex
+                  );
                 }
               }
 
@@ -505,8 +542,26 @@
             { sourceSize: 4 },
             { sourceSize: 4 },
             { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 1 },
             { sourceSize: 2 },
             { sourceSize: 1 },
+            { sourceSize: 2 },
+            { sourceSize: 1 },
+            { sourceSize: 2 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 4 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 2 },
           ]);
         },
         mounted() {
