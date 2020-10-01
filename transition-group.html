@@ -128,6 +128,15 @@
                 ", 1fr)",
             };
           },
+          isOnlyCounter: function () {
+            let counter = 0;
+
+            if (this.smallsCount) counter++;
+            if (this.highsCount || this.lastHighsCount) counter++;
+            if (this.largesCount) counter++;
+
+            return counter == 1 ? true : false;
+          },
         },
         methods: {
           isLargeCell: function (index) {
@@ -283,6 +292,7 @@
             this.lastHighsCount = 0;
 
             let isEvenBlock;
+            let isBlockWithLarge;
             let blocksCount = 0;
             let cellsCount = 0;
             let lastBlock;
@@ -291,7 +301,6 @@
             let blockIndex = 0;
             let isIncompleteBlock = false;
             let isIncompleteLarges = false;
-            let isIncompleteSmalls = false;
 
             for (let index = 0; index < sourceArrayLength; index++) {
               switch (sourceArray[index].sourceSize) {
@@ -306,7 +315,6 @@
               }
 
               cellsCount += sourceArray[index].sourceSize;
-              sourceArray[index].sorted = false;
               tempArray.push(sourceArray[index]);
             }
 
@@ -323,37 +331,41 @@
               blocksCount =
                 BlocksWithSmallsNHighsCount + scalingDownLargesCount;
 
-              isIncompleteSmalls = true;
               // isIncompleteBlock = !!isEvenSmallsCount;
+
+              if (!this.highsCount && !this.smallsCount) {
+                toSetBeforeEvenLarge = false;
+              }
             } else {
               blocksCount = this.getBlocks(cellsCount);
+              isIncompleteLarges =
+                this.smallsCount > 0 && this.largesCount < blocksCount;
 
-              if (this.largesCount || this.highsCount) {
-                isIncompleteLarges = this.largesCount < blocksCount;
+              if (isIncompleteLarges && this.highsCount) {
+                const diff = blocksCount - this.largesCount;
 
-                if (isIncompleteLarges && this.highsCount) {
-                  const diff = blocksCount - this.largesCount;
-
-                  if (diff <= this.highsCount) {
-                    this.lastHighsCount = diff;
-                  } else {
-                    this.lastHighsCount = this.highsCount;
-                  }
-
-                  this.highsCount -= this.lastHighsCount;
+                if (diff <= this.highsCount) {
+                  this.lastHighsCount = diff;
+                } else {
+                  this.lastHighsCount = this.highsCount;
                 }
-              } else {
+
+                this.highsCount -= this.lastHighsCount;
+              } else if (
+                (this.largesCount && this.highsCount && !this.smallsCount) ||
+                this.isOnlyCounter
+              ) {
                 toSetBeforeEvenLarge = false;
               }
 
               isIncompleteBlock = !!(cellsCount % this.cellsCountInBlock);
-
-              if (isIncompleteBlock) {
-                restCells = cellsCount - lastBlock * this.cellsCountInBlock;
-              }
             }
 
             lastBlock = blocksCount - 1;
+
+            if (isIncompleteBlock) {
+              restCells = cellsCount - lastBlock * this.cellsCountInBlock;
+            }
 
             console.log(sourceArrayLength);
             console.log(cellsCount);
@@ -385,14 +397,17 @@
                     soughtSize = 4;
                   } else {
                     soughtSize = 2;
+                    isBlockWithLarge = false;
                     this.isLastHigh = true;
                   }
                 } else if (
                   isIncompleteLarges &&
+                  !isBlockWithLarge &&
                   this.lastHighsCount &&
                   this.isEvenHighSizeByIndex(evenStepIndex)
                 ) {
                   soughtSize = 2;
+                  isBlockWithLarge = false;
                   this.isLastHigh = true;
                 } else {
                   soughtSize = 0;
@@ -401,7 +416,6 @@
                 isNotFoundSize = false;
 
                 if (soughtSize == 4) {
-                  toSetBeforeEvenLarge = false;
                   soughtSize = 2;
                 } else if (!isSmallSequence && this.highsCount) {
                   soughtSize = 2;
@@ -417,7 +431,7 @@
               }
 
               for (; sourceIndex < sourceArrayLength; sourceIndex++) {
-                if (tempArray[sourceIndex].sorted) {
+                if (this.isExist(tempArray[sourceIndex], "sorted")) {
                   continue;
                 }
 
@@ -450,40 +464,37 @@
                   soughtSize == tempArray[sourceIndex].sourceSize ||
                   toScaleDownLargeSizes
                 ) {
-                  if (
-                    !toScaleDownLargeSizes ||
-                    soughtSize == tempArray[sourceIndex].sourceSize
-                  ) {
+                  if (!toScaleDownLargeSizes) {
                     calcSize = tempArray[sourceIndex].sourceSize;
-
-                    if (toScaleDownLargeSizes) {
-                      toScaleDownLargeSizes = false;
-                    }
                   } else {
-                    switch (tempArray[sourceIndex].sourceSize) {
-                      case 4:
-                        if (!isSmallSequence) {
-                          calcSize = 2;
-                        } else {
-                          if (
-                            this.largesCount ||
-                            this.highsCount ||
-                            this.lastHighsCount
-                          ) {
-                            isSmallSequence = false;
+                    if (soughtSize == tempArray[sourceIndex].sourceSize) {
+                      calcSize = tempArray[sourceIndex].sourceSize;
+                    } else {
+                      switch (tempArray[sourceIndex].sourceSize) {
+                        case 4:
+                          if (!isSmallSequence) {
+                            calcSize = 2;
+                          } else {
+                            if (
+                              this.largesCount ||
+                              this.highsCount ||
+                              this.lastHighsCount
+                            ) {
+                              isSmallSequence = false;
+                            }
+                            calcSize = 1;
+                          }
+                          break;
+                        default:
+                          if (!isSmallSequence) {
+                            isSmallSequence = true;
                           }
                           calcSize = 1;
-                        }
-                        break;
-                      default:
-                        if (!isSmallSequence) {
-                          isSmallSequence = true;
-                        }
-                        calcSize = 1;
-                    }
+                      }
 
-                    if (toScaleDownLargeSizes) {
-                      toScaleDownLargeSizes = false;
+                      if (!this.isOnlyCounter) {
+                        toScaleDownLargeSizes = false;
+                      }
                     }
                   }
 
@@ -495,9 +506,18 @@
                     beforeEvenLarge = false;
                   }
 
-                  if (calcSize == 2) {
-                    evenStepIndex += 2;
-                  } else {
+                  switch (calcSize) {
+                    case 4:
+                      isBlockWithLarge = true;
+                      break;
+                    case 2:
+                      isBlockWithLarge =
+                        this.isLargeSizeByIndex(evenStepIndex) ||
+                        this.isEvenHighSizeByIndex(evenStepIndex);
+                      evenStepIndex += 2;
+                  }
+
+                  if (calcSize != 2) {
                     evenStepIndex++;
                   }
 
@@ -518,6 +538,17 @@
                   this.resetFirstFoundIndex(calcSize);
                   tempArray[sourceIndex].sorted = true;
                   sortedCount++;
+
+                  if (
+                    (toSetBeforeEvenLarge &&
+                      this.largesCount &&
+                      (this.highsCount || this.lastHighsCount) &&
+                      !this.smallsCount) ||
+                    this.isOnlyCounter
+                  ) {
+                    toSetBeforeEvenLarge = false;
+                  }
+
                   break;
                 } else {
                   this.setFirstFoundIndex(
@@ -540,27 +571,88 @@
             { sourceSize: 4 },
             { sourceSize: 4 },
             { sourceSize: 4 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
             { sourceSize: 4 },
             { sourceSize: 4 },
             { sourceSize: 4 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
             { sourceSize: 4 },
             { sourceSize: 4 },
             { sourceSize: 4 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
+            { sourceSize: 1 },
             { sourceSize: 1 },
             { sourceSize: 2 },
-            { sourceSize: 1 },
             { sourceSize: 2 },
-            { sourceSize: 1 },
             { sourceSize: 2 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 4 },
-            { sourceSize: 1 },
-            { sourceSize: 1 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
+            { sourceSize: 2 },
             { sourceSize: 2 },
           ]);
         },
