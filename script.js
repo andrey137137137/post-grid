@@ -188,39 +188,46 @@ new Vue({
     restructe(sourceArray) {
       this.config();
 
-      const tempArray = [];
-
-      let toScaleDownLargeSizes = false;
-      let isNotFoundSize = false;
-      let toSetBeforeEvenLarge = true;
-      let beforeEvenLarge;
-      let soughtSize;
-      let calcSize;
-      let isSmallSequence = false;
-      let isShiftedEvenStepIndex = false;
-      let prevEvenStepIndex = 0;
-      let evenStepIndex = 0;
-      let sourceIndex;
-      let sourceArrayLength = sourceArray.length;
-      let sortedCount = 0;
-
       this.largesCount = 0;
       this.highsCount = 0;
       this.smallsCount = 0;
       this.lastHighsCount = 0;
 
+      const tempArray = [];
+
+      let isIncompleteBlock = false;
       let isEvenBlock = false;
-      let isBlockWithLarge;
-      let lastHighsStartBlockIndex = -1;
+
+      let isIncompleteLarges = false;
+      let toSetBeforeEvenLarge = true;
+      let isBlockWithHighAsLarge;
+
+      let toScaleDownBigSizes = false;
+      let isNotFoundSize = false;
+
+      let isSmallSequence = false;
+      let isShiftedEvenStepIndex = false;
+
       let blocksCount = 0;
-      let cellsCount = 0;
       let lastBlock;
-      let restCells = 0;
-      let cellIndex = 0;
       let prevBlockIndex = 0;
       let blockIndex = 0;
-      let isIncompleteBlock = false;
-      let isIncompleteLarges = false;
+      let lastHighsStartBlockIndex = -1;
+
+      let cellsCount = 0;
+      let restCells = 0;
+      let cellIndex = 0;
+
+      let prevEvenStepIndex = 0;
+      let evenStepIndex = 0;
+
+      let sourceArrayLength = sourceArray.length;
+      let sourceIndex;
+
+      let sortedCount = 0;
+      let beforeEvenLarge;
+      let soughtSize;
+      let calcSize;
 
       for (let index = 0; index < sourceArrayLength; index++) {
         switch (sourceArray[index].sourceSize) {
@@ -270,6 +277,7 @@ new Vue({
           this.highsCount -= this.lastHighsCount;
 
           lastHighsStartBlockIndex = blocksCount - diff;
+          isBlockWithHighAsLarge = blockIndex >= lastHighsStartBlockIndex;
         } else if (
           (this.largesCount && this.highsCount && !this.smallsCount) ||
           this.isOnlyCounter
@@ -304,14 +312,11 @@ new Vue({
             if (this.smallsCount && (this.largesCount || this.highsCount || this.lastHighsCount)) {
               isSmallSequence = false;
             }
-
             soughtSize = 1;
           } else if (
+            this.isLargeSizeByIndex(evenStepIndex) &&
             prevEvenStepIndex - evenStepIndex <= 1 &&
-            // (this.largesCount || this.lastHighsCount) &&
-            (this.largesCount ||
-              (lastHighsStartBlockIndex >= 0 && blockIndex >= lastHighsStartBlockIndex)) &&
-            this.isLargeSizeByIndex(evenStepIndex)
+            (this.largesCount || isBlockWithHighAsLarge)
           ) {
             if (this.largesCount) {
               soughtSize = 4;
@@ -319,19 +324,13 @@ new Vue({
               soughtSize = 2;
               this.isLastHigh = true;
             }
-
-            isBlockWithLarge = false;
           } else if (
+            this.isEvenHighSizeByIndex(evenStepIndex) &&
             isIncompleteLarges &&
-            !isBlockWithLarge &&
-            this.lastHighsCount &&
-            lastHighsStartBlockIndex >= 0 &&
-            blockIndex >= lastHighsStartBlockIndex &&
-            this.isEvenHighSizeByIndex(evenStepIndex)
+            isBlockWithHighAsLarge
           ) {
             soughtSize = 2;
             this.isLastHigh = true;
-            isBlockWithLarge = false;
           } else {
             soughtSize = 0;
           }
@@ -361,30 +360,13 @@ new Vue({
           if (!soughtSize && tempArray[sourceIndex].sourceSize < 3) {
             soughtSize = tempArray[sourceIndex].sourceSize;
 
-            // console.log(blockIndex);
-            // console.log(this.smallsCount);
-
-            if (
-              soughtSize == 1
-              // &&
-              // this.smallsCount > 1
-              // &&
-              // blockIndex < lastBlock
-              // && isIncompleteBlock
-            ) {
+            if (soughtSize == 1) {
               isSmallSequence = true;
             }
-            // else if (blockIndex >= lastBlock - 1) {
-            //   if (isIncompleteBlock && !isIncompleteLarges) {
-            //     soughtSize = 2;
-            //   }
-            //   // isNotFoundSize = true;
-            //   // continue;
-            // }
           }
 
-          if (soughtSize == tempArray[sourceIndex].sourceSize || toScaleDownLargeSizes) {
-            if (!toScaleDownLargeSizes) {
+          if (soughtSize == tempArray[sourceIndex].sourceSize || toScaleDownBigSizes) {
+            if (!toScaleDownBigSizes) {
               calcSize = tempArray[sourceIndex].sourceSize;
             } else {
               if (soughtSize == tempArray[sourceIndex].sourceSize) {
@@ -409,26 +391,19 @@ new Vue({
                 }
 
                 if (!this.isOnlyCounter) {
-                  toScaleDownLargeSizes = false;
+                  toScaleDownBigSizes = false;
                 }
               }
             }
-
-            console.log(blockIndex);
-            console.log(isEvenBlock);
 
             prevBlockIndex = blockIndex;
             cellsCount += calcSize;
             cellIndex += calcSize;
             blockIndex = Math.floor(cellIndex / this.cellsCountInBlock);
 
-            // if ((blockIndex + 1) % 2) {
-            //   isEvenBlock = false;
-            // } else {
-            //   isEvenBlock = true;
-            // }
-
             if (blockIndex > prevBlockIndex) {
+              isBlockWithHighAsLarge =
+                lastHighsStartBlockIndex >= 0 && blockIndex >= lastHighsStartBlockIndex;
               isEvenBlock = !isEvenBlock;
             }
 
@@ -438,31 +413,16 @@ new Vue({
               beforeEvenLarge = false;
             }
 
-            // console.log(prevEvenStepIndex);
-            // console.log(evenStepIndex);
-
             if (!isShiftedEvenStepIndex && !this.largesCount && isEvenBlock && isIncompleteLarges) {
               prevEvenStepIndex = evenStepIndex;
               evenStepIndex -= 2;
-              isBlockWithLarge = false;
               isShiftedEvenStepIndex = true;
               toSetBeforeEvenLarge = false;
+            } else if (calcSize == 2) {
+              evenStepIndex += 2;
             } else {
-              switch (calcSize) {
-                case 4:
-                  isBlockWithLarge = true;
-                case 1:
-                  evenStepIndex++;
-                  break;
-                case 2:
-                  isBlockWithLarge =
-                    this.isLargeSizeByIndex(evenStepIndex) ||
-                    this.isEvenHighSizeByIndex(evenStepIndex);
-                  evenStepIndex += 2;
-              }
+              evenStepIndex++;
             }
-
-            console.log(isBlockWithLarge);
 
             this.cells.push({
               key: this.isExist(tempArray[sourceIndex], "key")
@@ -495,7 +455,7 @@ new Vue({
         }
 
         if (sourceIndex >= sourceArrayLength) {
-          toScaleDownLargeSizes = true;
+          toScaleDownBigSizes = true;
           isNotFoundSize = true;
           this.resetFirstFoundIndex(soughtSize);
         }
