@@ -8,7 +8,12 @@
   </head>
   <body>
     <div id="post-grid-demo" class="demo">
-      <transition-group name="cell" tag="div" class="container" :style="columnSizeStyle">
+      <transition-group
+        name="cell"
+        tag="div"
+        class="container"
+        :style="columnSizeStyle"
+      >
         <div
           v-for="(cell, index) in cells"
           :key="cell.key"
@@ -16,6 +21,7 @@
           :style="evenBeforeLargeStyle(index)"
         >
           <ul>
+            <li>index: {{ cell.evenStepIndex }}</li>
             <li>key: {{ cell.key }}</li>
             <li>sourceSize: {{ cell.sourceSize }}</li>
             <li>calcSize: {{ cell.calcSize }}</li>
