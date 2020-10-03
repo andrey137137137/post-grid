@@ -17,10 +17,10 @@ new Vue({
       high: -1,
       small: -1,
     },
-    largesCount: 0,
-    highsCount: 0,
-    smallsCount: 0,
-    lastHighsCount: 0,
+    largesCounter: 0,
+    highsCounter: 0,
+    smallsCounter: 0,
+    lastHighsCounter: 0,
     cells: [],
   },
   computed: {
@@ -53,18 +53,18 @@ new Vue({
     isOnlyCounter: function () {
       let counter = 0;
 
-      if (this.smallsCount > 0) counter++;
-      if (this.highsCount > 0 || this.lastHighsCount > 0) counter++;
-      if (this.largesCount > 0) counter++;
+      if (this.smallsCounter > 0) counter++;
+      if (this.highsCounter > 0 || this.lastHighsCounter > 0) counter++;
+      if (this.largesCounter > 0) counter++;
 
       return counter == 1 ? true : false;
     },
     restCells: function () {
       return (
-        this.smallsCount +
-        this.highsCount * 2 +
-        this.lastHighsCount * 2 +
-        this.largesCount * 4
+        this.smallsCounter +
+        this.highsCounter * 2 +
+        this.lastHighsCounter * 2 +
+        this.largesCounter * 4
       );
     },
   },
@@ -144,7 +144,7 @@ new Vue({
       }
     },
     getFirstFoundIndex: function (size) {
-      return 0;
+      // return 0;
       if (!size) return 0;
 
       const prop = this.getSizeName(size);
@@ -158,32 +158,32 @@ new Vue({
     getBlocks: function (cells) {
       return Math.ceil(cells / this.cellsCountInBlock);
     },
-    setSizeCount: function (size) {
+    setSizeCounter: function (size) {
       size--;
 
       if (size < 0) size = 0;
 
       return size;
     },
-    decSizeCount: function (size) {
+    decSizeCounter: function (size) {
       switch (size) {
         case 4:
-          // this.largesCount--;
-          this.largesCount = this.setSizeCount(this.largesCount);
+          // this.largesCounter--;
+          this.largesCounter = this.setSizeCounter(this.largesCounter);
           break;
         case 2:
           if (this.isLastHigh) {
-            // this.lastHighsCount--;
-            this.lastHighsCount = this.setSizeCount(this.lastHighsCount);
+            // this.lastHighsCounter--;
+            this.lastHighsCounter = this.setSizeCounter(this.lastHighsCounter);
             this.isLastHigh = false;
           } else {
-            // this.highsCount--;
-            this.highsCount = this.setSizeCount(this.highsCount);
+            // this.highsCounter--;
+            this.highsCounter = this.setSizeCounter(this.highsCounter);
           }
           break;
         case 1:
-          // this.smallsCount--;
-          this.smallsCount = this.setSizeCount(this.smallsCount);
+          // this.smallsCounter--;
+          this.smallsCounter = this.setSizeCounter(this.smallsCounter);
       }
     },
     addCell: function (sourceData, calcData) {
@@ -214,10 +214,10 @@ new Vue({
     restructe(sourceArray) {
       this.config();
 
-      this.largesCount = 0;
-      this.highsCount = 0;
-      this.smallsCount = 0;
-      this.lastHighsCount = 0;
+      this.largesCounter = 0;
+      this.highsCounter = 0;
+      this.smallsCounter = 0;
+      this.lastHighsCounter = 0;
 
       const tempArray = [];
 
@@ -239,8 +239,7 @@ new Vue({
       let blockIndex = 0;
       let lastHighsStartBlockIndex = -1;
 
-      let cellsCount = 0;
-      let cellIndex = 0;
+      let cellsCounter = 0;
 
       let gaps = 0;
 
@@ -250,7 +249,7 @@ new Vue({
       let sourceArrayLength = sourceArray.length;
       let sourceIndex;
 
-      let sortedCount = 0;
+      let sortedCounter = 0;
       let styleGridColStart;
       let soughtSize;
       let calcSize;
@@ -258,53 +257,53 @@ new Vue({
       for (let index = 0; index < sourceArrayLength; index++) {
         switch (sourceArray[index].sourceSize) {
           case 4:
-            this.largesCount++;
+            this.largesCounter++;
             break;
           case 2:
-            this.highsCount++;
+            this.highsCounter++;
             break;
           case 1:
-            this.smallsCount++;
+            this.smallsCounter++;
         }
 
-        cellsCount += sourceArray[index].sourceSize;
+        cellsCounter += sourceArray[index].sourceSize;
         tempArray.push(sourceArray[index]);
       }
 
-      if (cellsCount < this.getCompleteCellsCount(this.largesCount)) {
-        const BlocksWithSmallsNHighsCount =
-          Math.floor(this.smallsCount / 2) + this.highsCount;
-        const scalingDownLargesCount = Math.ceil(
-          (this.largesCount - BlocksWithSmallsNHighsCount) / 2
+      if (cellsCounter < this.getCompleteCellsCount(this.largesCounter)) {
+        const BlocksWithSmallsNHighsCounter =
+          Math.floor(this.smallsCounter / 2) + this.highsCounter;
+        const scalingDownLargesCounter = Math.ceil(
+          (this.largesCounter - BlocksWithSmallsNHighsCounter) / 2
         );
 
-        blocksCount = BlocksWithSmallsNHighsCount + scalingDownLargesCount;
+        blocksCount = BlocksWithSmallsNHighsCounter + scalingDownLargesCounter;
 
-        if (this.highsCount <= 0 && this.smallsCount <= 0) {
+        if (this.highsCounter <= 0 && this.smallsCounter <= 0) {
           toSetBeforeEvenLarge = false;
         }
       } else {
-        blocksCount = this.getBlocks(cellsCount);
+        blocksCount = this.getBlocks(cellsCounter);
         isIncompleteLarges =
-          this.smallsCount > 0 && this.largesCount < blocksCount;
+          this.smallsCounter > 0 && this.largesCounter < blocksCount;
 
-        if (isIncompleteLarges && this.highsCount > 0) {
-          const diff = blocksCount - this.largesCount;
+        if (isIncompleteLarges && this.highsCounter > 0) {
+          const diff = blocksCount - this.largesCounter;
 
-          if (diff < this.highsCount) {
-            this.lastHighsCount = diff;
+          if (diff < this.highsCounter) {
+            this.lastHighsCounter = diff;
           } else {
-            this.lastHighsCount = this.highsCount;
+            this.lastHighsCounter = this.highsCounter;
           }
 
-          this.highsCount -= this.lastHighsCount;
+          this.highsCounter -= this.lastHighsCounter;
 
           lastHighsStartBlockIndex = blocksCount - diff;
           isBlockWithHighAsLarge = blockIndex >= lastHighsStartBlockIndex;
         } else if (
-          (this.largesCount > 0 &&
-            this.highsCount > 0 &&
-            this.smallsCount <= 0) ||
+          (this.largesCounter > 0 &&
+            this.highsCounter > 0 &&
+            this.smallsCounter <= 0) ||
           this.isOnlyCounter
         ) {
           toSetBeforeEvenLarge = false;
@@ -315,33 +314,33 @@ new Vue({
 
       console.log(blocksCount);
       console.log(lastBlock);
-      console.log(this.highsCount);
-      console.log(this.lastHighsCount);
+      console.log(this.highsCounter);
+      console.log(this.lastHighsCounter);
       console.log(lastHighsStartBlockIndex);
       console.log(isIncompleteLarges);
 
-      cellsCount = 0;
+      cellsCounter = 0;
       this.cells = [];
 
-      while (sortedCount < sourceArrayLength) {
+      while (sortedCounter < sourceArrayLength) {
         if (!isNotFoundSize) {
           if (isSmallSequence) {
             if (
-              this.smallsCount > 0 &&
-              (this.largesCount > 0 ||
-                this.highsCount > 0 ||
-                this.lastHighsCount > 0)
+              this.smallsCounter > 0 &&
+              (this.largesCounter > 0 ||
+                this.highsCounter > 0 ||
+                this.lastHighsCounter > 0)
             ) {
               isSmallSequence = false;
             }
             soughtSize = 1;
           } else if (
             this.isLargeSizeByIndex(evenStepIndex) &&
-            (this.largesCount > 0 || !isEvenBlock) &&
+            (this.largesCounter > 0 || !isEvenBlock) &&
             prevEvenStepIndex - evenStepIndex <= 1 &&
-            (this.largesCount > 0 || isBlockWithHighAsLarge)
+            (this.largesCounter > 0 || isBlockWithHighAsLarge)
           ) {
-            if (this.largesCount > 0) {
+            if (this.largesCounter > 0) {
               soughtSize = 4;
             } else {
               soughtSize = 2;
@@ -356,7 +355,7 @@ new Vue({
             soughtSize = 2;
             this.isLastHigh = true;
           } else if (gaps) {
-            switch (sourceArrayLength - sortedCount) {
+            switch (sourceArrayLength - sortedCounter) {
               case 5:
               case 4:
                 if (!this.isOnlyCounter) {
@@ -368,28 +367,28 @@ new Vue({
                 if (!this.isOnlyCounter) {
                   soughtSize = 1;
 
-                  if (this.smallsCount > 1) {
+                  if (this.smallsCounter > 1) {
                     isSmallSequence = true;
                   }
                   break;
                 }
               case 2:
                 if (!this.isOnlyCounter) {
-                  if (this.largesCount == 1 || this.highsCount == 1) {
+                  if (this.largesCounter == 1 || this.highsCounter == 1) {
                     soughtSize = 1;
                   }
                   break;
                 } else {
-                  if (this.highsCount > 0) {
+                  if (this.highsCounter > 0) {
                     soughtSize = 2;
                     break;
                   }
                 }
               case 1:
-                if (this.largesCount == 1) {
+                if (this.largesCounter == 1) {
                   soughtSize = 4;
                   break;
-                } else if (this.highsCount == 1) {
+                } else if (this.highsCounter == 1) {
                   soughtSize = 2;
                   break;
                 }
@@ -406,7 +405,7 @@ new Vue({
 
           if (soughtSize == 4) {
             soughtSize = 2;
-          } else if (!isSmallSequence && this.highsCount > 0) {
+          } else if (!isSmallSequence && this.highsCounter > 0) {
             soughtSize = 2;
           } else {
             soughtSize = 1;
@@ -426,14 +425,14 @@ new Vue({
             soughtSize = tempArray[sourceIndex].sourceSize;
 
             // console.log("--------------------------------");
-            // console.log(this.lastHighsCount);
-            // console.log(this.highsCount);
+            // console.log(this.lastHighsCounter);
+            // console.log(this.highsCounter);
             // console.log(sourceIndex);
             // console.log(soughtSize);
 
             switch (soughtSize) {
               case 2:
-                if (this.highsCount <= 0) {
+                if (this.highsCounter <= 0) {
                   soughtSize = 0;
                   continue;
                 }
@@ -442,8 +441,8 @@ new Vue({
                 isSmallSequence = true;
             }
 
-            // console.log(this.lastHighsCount);
-            // console.log(this.highsCount);
+            // console.log(this.lastHighsCounter);
+            // console.log(this.highsCounter);
             // console.log(this.cellID);
             // console.log(soughtSize);
             // console.log("--------------------------------");
@@ -465,9 +464,9 @@ new Vue({
                       calcSize = 2;
                     } else {
                       if (
-                        this.largesCount > 0 ||
-                        this.highsCount > 0 ||
-                        this.lastHighsCount > 0
+                        this.largesCounter > 0 ||
+                        this.highsCounter > 0 ||
+                        this.lastHighsCounter > 0
                       ) {
                         isSmallSequence = false;
                       }
@@ -515,15 +514,14 @@ new Vue({
               }
             );
 
-            this.decSizeCount(tempArray[sourceIndex].sourceSize);
+            this.decSizeCounter(tempArray[sourceIndex].sourceSize);
             this.resetFirstFoundIndex(calcSize);
             tempArray[sourceIndex].sorted = true;
-            sortedCount++;
+            sortedCounter++;
 
             prevBlockIndex = blockIndex;
-            cellsCount += calcSize;
-            cellIndex += calcSize;
-            blockIndex = Math.floor(cellIndex / this.cellsCountInBlock);
+            cellsCounter += calcSize;
+            blockIndex = Math.floor(cellsCounter / this.cellsCountInBlock);
 
             if (blockIndex > prevBlockIndex) {
               isBlockWithHighAsLarge =
@@ -534,14 +532,14 @@ new Vue({
               if (blockIndex == lastBlock) {
                 gaps =
                   this.cellsCountInBlock -
-                  this.smallsCount -
-                  this.highsCount * 2 -
-                  this.lastHighsCount * 2 -
-                  this.largesCount * 4;
+                  this.smallsCounter -
+                  this.highsCounter * 2 -
+                  this.lastHighsCounter * 2 -
+                  this.largesCounter * 4;
 
-                if (this.lastHighsCount > 0 && gaps) {
-                  this.highsCount += this.lastHighsCount;
-                  this.lastHighsCount = 0;
+                if (this.lastHighsCounter > 0 && gaps) {
+                  this.highsCounter += this.lastHighsCounter;
+                  this.lastHighsCounter = 0;
                 }
 
                 if (!isEvenBlock) {
@@ -552,7 +550,7 @@ new Vue({
 
             if (
               !isShiftedEvenStepIndex &&
-              this.largesCount <= 0 &&
+              this.largesCounter <= 0 &&
               blockIndex == lastHighsStartBlockIndex &&
               isEvenBlock &&
               isIncompleteLarges
@@ -569,9 +567,9 @@ new Vue({
 
             if (
               (toSetBeforeEvenLarge &&
-                this.largesCount > 0 &&
-                (this.highsCount > 0 || this.lastHighsCount > 0) &&
-                this.smallsCount <= 0) ||
+                this.largesCounter > 0 &&
+                (this.highsCounter > 0 || this.lastHighsCounter > 0) &&
+                this.smallsCounter <= 0) ||
               this.isOnlyCounter
             ) {
               toSetBeforeEvenLarge = false;
@@ -589,11 +587,11 @@ new Vue({
         if (sourceIndex >= sourceArrayLength) {
           switch (soughtSize) {
             case 4:
-              if (this.largesCount > 0) break;
+              if (this.largesCounter > 0) break;
             case 2:
-              if (this.highsCount > 0 || this.lastHighsCount > 0) break;
+              if (this.highsCounter > 0 || this.lastHighsCounter > 0) break;
             case 1:
-              if (this.smallsCount > 0) break;
+              if (this.smallsCounter > 0) break;
             default:
               toScaleDownBigSizes = true;
           }
@@ -631,7 +629,7 @@ new Vue({
       }
       $vm.timeoutID = setTimeout(function () {
         $vm.restructe($vm.cells);
-      }, 1000);
+      }, 500);
     });
   },
 });
