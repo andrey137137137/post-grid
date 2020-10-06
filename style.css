@@ -5,6 +5,7 @@ ul {
   list-style-type: none;
   list-style-position: inside;
 }
+
 .container {
   display: grid;
   grid-auto-flow: dense;
@@ -12,36 +13,54 @@ ul {
   width: 300px;
   color: white;
 }
+
 .cell {
+  position: relative;
   display: flex;
   align-items: center;
   box-sizing: border-box;
   border: 1px solid white;
 }
+
+.cell--col_start_1 {
+  grid-column-start: 1;
+}
+
+.cell--col_start_2 {
+  grid-column-start: 2;
+}
+
 .cell-small {
   border: 1px solid black;
   color: black;
 }
+
 .cell-high--bg {
   background-color: #005f;
 }
+
 .cell-large--bg {
   background-color: #070;
 }
+
 .cell-high {
   grid-row-end: 2 span;
 }
+
 .cell-large--md {
   grid-row-end: 2 span;
 }
+
 .cell-large--lg {
   grid-row-end: 2 span;
   grid-column-end: 2 span;
 }
+
 .cell-large--xl {
   grid-row-end: 2 span;
   grid-column-end: 2 span;
 }
+
 .cell-move {
   transition: all 1s;
 }

@@ -5,6 +5,7 @@ new Vue({
     totalWidth: 0,
     timeoutID: 0,
     cols: 3,
+    cellWidth: 100,
     cellHeight: 100,
     cellID: -1,
     breakpoints: {
@@ -361,6 +362,7 @@ new Vue({
             soughtSize = 2;
             this.isLastHigh = true;
           } else if (gaps) {
+            soughtSize = 0;
             switch (sourceArrayLength - sortedCounter) {
               case 5:
               case 4:
@@ -392,16 +394,30 @@ new Vue({
                 }
               case 1:
                 if (this.largeCounter == 1) {
+                  console.log(gaps);
+                  // this.addCell(
+                  //   {
+                  //     key: ++this.cellID,
+                  //     sourceSize: 0,
+                  //   },
+                  //   {
+                  //     evenStepIndex: 0,
+                  //     calcSize: 0,
+                  //     gridColStart: 0,
+                  //   }
+                  // );
+                  marginLeft = this.cellWidth;
                   soughtSize = 4;
-                  break;
                 } else if (this.highCounter == 1) {
+                  marginLeft = this.cellWidth * 2;
                   soughtSize = 2;
-                  break;
                 }
               default:
                 gaps = 0;
-                soughtSize = 1;
-                isSmallSequence = true;
+                if (!soughtSize) {
+                  soughtSize = 1;
+                  isSmallSequence = true;
+                }
             }
           } else {
             soughtSize = 0;
@@ -438,7 +454,7 @@ new Vue({
 
             switch (soughtSize) {
               case 1:
-                if (!isOverlyLarges && this.smallCounter > 1) {
+                if (this.smallCounter > 1 || isOverlyLarges) {
                   isSmallSequence = true;
                   break;
                 } else if (this.highCounter <= 0 && this.lastHighCounter > 0) {
@@ -549,6 +565,16 @@ new Vue({
               }
             );
 
+            if (
+              (toSetGridColStart &&
+                this.largeCounter > 0 &&
+                (this.highCounter > 0 || this.lastHighCounter > 0) &&
+                this.smallCounter <= 0) ||
+              this.isOnlyCounter
+            ) {
+              toSetGridColStart = false;
+            }
+
             this.decSizeCounter(this.tempArray[sourceIndex].sourceSize);
             this.resetFirstFoundIndex(calcSize);
             this.tempArray[sourceIndex].sorted = true;
@@ -600,16 +626,6 @@ new Vue({
               evenStepIndex++;
             }
 
-            if (
-              (toSetGridColStart &&
-                this.largeCounter > 0 &&
-                (this.highCounter > 0 || this.lastHighCounter > 0) &&
-                this.smallCounter <= 0) ||
-              this.isOnlyCounter
-            ) {
-              toSetGridColStart = false;
-            }
-
             prevSize = calcSize;
 
             break;
@@ -642,15 +658,8 @@ new Vue({
     this.restructe([
       { sourceSize: 1 },
       { sourceSize: 1 },
-      { sourceSize: 2 },
-      { sourceSize: 2 },
-      { sourceSize: 1 },
-      { sourceSize: 1 },
-      { sourceSize: 1 },
-      { sourceSize: 2 },
-      { sourceSize: 1 },
-      { sourceSize: 2 },
-      { sourceSize: 1 },
+      { sourceSize: 4 },
+      { sourceSize: 4 },
     ]);
   },
   mounted() {
