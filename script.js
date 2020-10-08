@@ -80,10 +80,17 @@ new Vue({
       return isThreeMultiple;
     },
     evenBeforeLargeStyle: function (index) {
-      if (this.isLessThenXL) return "";
-      if (!this.cells[index].gridColStart) return "";
+      const styles = {};
 
-      return "grid-column-start: " + this.cells[index].gridColStart;
+      if (!this.isLessThenXL && this.cells[index].gridColStart) {
+        styles["grid-column-start"] = this.cells[index].gridColStart;
+      }
+
+      if (!this.isLessThenMD && this.cells[index].marginLeft) {
+        styles.left = this.cells[index].marginLeft + "px";
+      }
+
+      return styles;
     },
     classes: function (index) {
       return {
@@ -188,15 +195,6 @@ new Vue({
           this.smallCounter = this.setSizeCounter(this.smallCounter);
       }
     },
-    addCell: function (sourceData, calcData) {
-      this.cells.push({
-        evenStepIndex: calcData.evenStepIndex,
-        key: sourceData.key >= 0 ? sourceData.key : ++this.cellID,
-        sourceSize: sourceData.sourceSize,
-        calcSize: calcData.calcSize,
-        gridColStart: calcData.gridColStart,
-      });
-    },
     isExist: function (obj, prop) {
       return Object.prototype.hasOwnProperty.call(obj, prop);
     },
@@ -227,6 +225,7 @@ new Vue({
 
       let isOverlyLarges = false;
       let isIncompleteLarges = false;
+      let isIncompleteLastBlock = false;
       let toSetGridColStart = true;
       let isBlockWithHighAsLarge;
 
@@ -245,8 +244,6 @@ new Vue({
       let cellCounter = 0;
       let prevSize = 0;
 
-      let gaps = 0;
-
       let prevEvenStepIndex = 0;
       let evenStepIndex = 0;
 
@@ -254,6 +251,8 @@ new Vue({
       let sourceIndex;
 
       let sortedCounter = 0;
+      let countInLastBlock = 0;
+      let marginLeft = 0;
       let gridColStart;
       let soughtSize;
       let calcSize;
@@ -361,16 +360,18 @@ new Vue({
           ) {
             soughtSize = 2;
             this.isLastHigh = true;
-          } else if (gaps) {
+          } else if (countInLastBlock) {
             soughtSize = 0;
-            switch (sourceArrayLength - sortedCounter) {
+
+            switch (countInLastBlock) {
               case 5:
+                break;
               case 4:
                 if (!this.isOnlyCounter) {
                   soughtSize = 1;
                   isSmallSequence = true;
-                  break;
                 }
+                break;
               case 3:
                 if (!this.isOnlyCounter) {
                   soughtSize = 1;
@@ -378,46 +379,36 @@ new Vue({
                   if (this.smallCounter > 1) {
                     isSmallSequence = true;
                   }
-                  break;
                 }
+                break;
               case 2:
                 if (!this.isOnlyCounter) {
                   if (this.largeCounter == 1 || this.highCounter == 1) {
                     soughtSize = 1;
                   }
-                  break;
+                } else if (this.smallCounter > 0) {
+                  soughtSize = 1;
+                } else if (this.highCounter > 0) {
+                  marginLeft = this.cellWidth;
+                  soughtSize = 2;
                 } else {
-                  if (this.highCounter > 0) {
-                    soughtSize = 2;
-                    break;
-                  }
+                  soughtSize = 4;
                 }
+                break;
               case 1:
                 if (this.largeCounter == 1) {
-                  console.log(gaps);
-                  // this.addCell(
-                  //   {
-                  //     key: ++this.cellID,
-                  //     sourceSize: 0,
-                  //   },
-                  //   {
-                  //     evenStepIndex: 0,
-                  //     calcSize: 0,
-                  //     gridColStart: 0,
-                  //   }
-                  // );
                   marginLeft = this.cellWidth;
                   soughtSize = 4;
                 } else if (this.highCounter == 1) {
                   marginLeft = this.cellWidth * 2;
                   soughtSize = 2;
                 }
-              default:
-                gaps = 0;
-                if (!soughtSize) {
-                  soughtSize = 1;
-                  isSmallSequence = true;
-                }
+            }
+
+            if (!soughtSize) {
+              marginLeft = 0;
+              soughtSize = 1;
+              isSmallSequence = true;
             }
           } else {
             soughtSize = 0;
@@ -454,7 +445,7 @@ new Vue({
 
             switch (soughtSize) {
               case 1:
-                if (this.smallCounter > 1 || isOverlyLarges) {
+                if (this.smallCounter > 1) {
                   isSmallSequence = true;
                   break;
                 } else if (this.highCounter <= 0 && this.lastHighCounter > 0) {
@@ -553,17 +544,16 @@ new Vue({
               }
             }
 
-            this.addCell(
-              {
-                key: this.tempArray[sourceIndex].key,
-                sourceSize: this.tempArray[sourceIndex].sourceSize,
-              },
-              {
-                evenStepIndex: evenStepIndex,
-                calcSize: calcSize,
-                gridColStart: gridColStart,
-              }
-            );
+            this.cells.push({
+              evenStepIndex: evenStepIndex,
+              key: this.isExist(this.tempArray[sourceIndex], "key")
+                ? this.tempArray[sourceIndex].key
+                : ++this.cellID,
+              sourceSize: this.tempArray[sourceIndex].sourceSize,
+              calcSize: calcSize,
+              marginLeft: marginLeft,
+              gridColStart: gridColStart,
+            });
 
             if (
               (toSetGridColStart &&
@@ -590,21 +580,22 @@ new Vue({
                 blockIndex >= lastHighsStartBlockIndex;
               isEvenBlock = !isEvenBlock;
 
-              if (blockIndex == lastBlock) {
-                gaps =
+              if (blockIndex == lastBlock && isEvenBlock) {
+                isIncompleteLastBlock = !!(
                   this.cellsCountInBlock -
                   this.smallCounter -
                   this.highCounter * 2 -
                   this.lastHighCounter * 2 -
-                  this.largeCounter * 4;
+                  this.largeCounter * 4
+                );
 
-                if (this.lastHighCounter > 0 && gaps) {
-                  this.highCounter += this.lastHighCounter;
-                  this.lastHighCounter = 0;
-                }
+                if (isIncompleteLastBlock) {
+                  if (this.lastHighCounter > 0) {
+                    this.highCounter += this.lastHighCounter;
+                    this.lastHighCounter = 0;
+                  }
 
-                if (!isEvenBlock) {
-                  gaps = 0;
+                  countInLastBlock = sourceArrayLength - sortedCounter;
                 }
               }
             }
@@ -655,12 +646,7 @@ new Vue({
     },
   },
   created() {
-    this.restructe([
-      { sourceSize: 1 },
-      { sourceSize: 1 },
-      { sourceSize: 4 },
-      { sourceSize: 4 },
-    ]);
+    this.restructe([{ sourceSize: 4 }, { sourceSize: 4 }, { sourceSize: 4 }]);
   },
   mounted() {
     $vm = this;
