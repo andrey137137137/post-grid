@@ -80,17 +80,15 @@ new Vue({
       return isThreeMultiple;
     },
     evenBeforeLargeStyle: function (index) {
-      const styles = {};
+      // if (!this.isLessThenXL && this.cells[index].gridColStart) {
+      //   styles["grid-column-start"] = this.cells[index].gridColStart;
+      // }
 
-      if (!this.isLessThenXL && this.cells[index].gridColStart) {
-        styles["grid-column-start"] = this.cells[index].gridColStart;
-      }
+      // if (!this.isLessThenMD && this.cells[index].marginLeft) {
+      //   styles.left = this.cells[index].marginLeft + "px";
+      // }
 
-      if (!this.isLessThenMD && this.cells[index].marginLeft) {
-        styles.left = this.cells[index].marginLeft + "px";
-      }
-
-      return styles;
+      return this.cells[index].styles;
     },
     classes: function (index) {
       return {
@@ -252,8 +250,7 @@ new Vue({
 
       let sortedCounter = 0;
       let countInLastBlock = 0;
-      let marginLeft = 0;
-      let gridColStart;
+      let styles = {};
       let soughtSize;
       let calcSize;
 
@@ -389,7 +386,7 @@ new Vue({
                 } else if (this.smallCounter > 0) {
                   soughtSize = 1;
                 } else if (this.highCounter > 0) {
-                  marginLeft = this.cellWidth;
+                  styles.left = this.cellWidth;
                   soughtSize = 2;
                 } else {
                   soughtSize = 4;
@@ -397,16 +394,21 @@ new Vue({
                 break;
               case 1:
                 if (this.largeCounter == 1) {
-                  marginLeft = this.cellWidth;
+                  styles.left = this.cellWidth;
                   soughtSize = 4;
                 } else if (this.highCounter == 1) {
-                  marginLeft = this.cellWidth * 2;
+                  styles.left = this.cellWidth * 2;
                   soughtSize = 2;
                 }
+
+                styles.height = this.cellHeight * 2 + "px";
+            }
+
+            if (this.isExist(styles, "left")) {
+              styles.left += "px";
             }
 
             if (!soughtSize) {
-              marginLeft = 0;
               soughtSize = 1;
               isSmallSequence = true;
             }
@@ -451,6 +453,12 @@ new Vue({
                 } else if (this.highCounter <= 0 && this.lastHighCounter > 0) {
                   this.highCounter++;
                   this.lastHighCounter--;
+                } else if (blockIndex == lastBlock) {
+                  break;
+                } else if (isOverlyLarges) {
+                  soughtSize = 2;
+                  toScaleDownBigSizes = true;
+                  continue;
                 }
               case 2:
                 if (soughtSize == 2) {
@@ -506,8 +514,6 @@ new Vue({
               }
             }
 
-            gridColStart = 0;
-
             if (toSetGridColStart) {
               switch (calcSize) {
                 case 2:
@@ -520,9 +526,13 @@ new Vue({
                       isEvenBlock &&
                       !this.isEvenHighSizeByIndex(evenStepIndex)
                     ) {
-                      this.cells[this.cells.length - 1].gridColStart = 1;
+                      this.cells[this.cells.length - 1].styles[
+                        "grid-column-start"
+                      ] = 1;
                     } else if (this.isEvenHighSizeByIndex(evenStepIndex)) {
-                      this.cells[this.cells.length - 1].gridColStart = 2;
+                      this.cells[this.cells.length - 1].styles[
+                        "grid-column-start"
+                      ] = 2;
                     }
                   }
                   break;
@@ -533,13 +543,13 @@ new Vue({
                         this.isLargeCell(evenStepIndex + 4) &&
                         prevSize == 1
                       ) {
-                        gridColStart = 1;
+                        styles["grid-column-start"] = 1;
                       } else if (this.isLargeCell(evenStepIndex + 3)) {
-                        gridColStart = 2;
+                        styles["grid-column-start"] = 2;
                       }
                     }
                   } else if (this.isLargeCell(evenStepIndex + 2)) {
-                    gridColStart = 1;
+                    styles["grid-column-start"] = 1;
                   }
               }
             }
@@ -551,8 +561,7 @@ new Vue({
                 : ++this.cellID,
               sourceSize: this.tempArray[sourceIndex].sourceSize,
               calcSize: calcSize,
-              marginLeft: marginLeft,
-              gridColStart: gridColStart,
+              styles: styles,
             });
 
             if (
@@ -581,15 +590,15 @@ new Vue({
               isEvenBlock = !isEvenBlock;
 
               if (blockIndex == lastBlock && isEvenBlock) {
-                isIncompleteLastBlock = !!(
-                  this.cellsCountInBlock -
-                  this.smallCounter -
-                  this.highCounter * 2 -
-                  this.lastHighCounter * 2 -
-                  this.largeCounter * 4
-                );
+                countInLastBlock =
+                  (this.smallCounter +
+                    this.highCounter * 2 +
+                    this.lastHighCounter * 2 +
+                    this.largeCounter * 4) %
+                  this.cellsCountInBlock;
+                console.log(countInLastBlock);
 
-                if (isIncompleteLastBlock) {
+                if (countInLastBlock) {
                   if (this.lastHighCounter > 0) {
                     this.highCounter += this.lastHighCounter;
                     this.lastHighCounter = 0;
@@ -610,7 +619,6 @@ new Vue({
               prevEvenStepIndex = evenStepIndex;
               evenStepIndex -= 2;
               isShiftedEvenStepIndex = true;
-              // toSetGridColStart = false;
             } else if (calcSize == 2) {
               evenStepIndex += 2;
             } else {
@@ -618,6 +626,7 @@ new Vue({
             }
 
             prevSize = calcSize;
+            styles = {};
 
             break;
           } else {
@@ -639,14 +648,20 @@ new Vue({
             default:
               toScaleDownBigSizes = true;
           }
+
           isNotFoundSize = true;
-          this.resetFirstFoundIndex(soughtSize);
+          if (soughtSize) this.resetFirstFoundIndex(soughtSize);
         }
       }
     },
   },
   created() {
-    this.restructe([{ sourceSize: 4 }, { sourceSize: 4 }, { sourceSize: 4 }]);
+    this.restructe([
+      { sourceSize: 1 },
+      { sourceSize: 4 },
+      { sourceSize: 4 },
+      { sourceSize: 4 },
+    ]);
   },
   mounted() {
     $vm = this;
