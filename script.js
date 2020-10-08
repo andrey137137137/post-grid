@@ -26,7 +26,7 @@ new Vue({
     tempArray: [],
   },
   computed: {
-    cellsCountInBlock: function () {
+    cellsCountInRow: function () {
       if (this.isLessThenMD) return 1;
       if (this.isLessThenLG) return 4;
       return 6;
@@ -162,8 +162,8 @@ new Vue({
     getCompleteCellsCount: function (cells) {
       return cells * 4 + cells * 2;
     },
-    getBlocks: function (cells) {
-      return Math.ceil(cells / this.cellsCountInBlock);
+    getRows: function (cells) {
+      return Math.ceil(cells / this.cellsCountInRow);
     },
     setSizeCounter: function (size) {
       size--;
@@ -219,13 +219,13 @@ new Vue({
       this.smallCounter = 0;
       this.lastHighCounter = 0;
 
-      let isEvenBlock = false;
+      let isEvenRow = false;
 
       let isOverlyLarges = false;
       let isIncompleteLarges = false;
-      let isIncompleteLastBlock = false;
+      let isIncompleteLastRow = false;
       let toSetGridColStart = true;
-      let isBlockWithHighAsLarge;
+      let isRowWithHighAsLarge;
 
       let toScaleDownBigSizes = false;
       let isNotFoundSize = false;
@@ -233,11 +233,11 @@ new Vue({
       let isSmallSequence = false;
       let isShiftedEvenStepIndex = false;
 
-      let blocksCount = 0;
-      let lastBlock;
-      let prevBlockIndex = 0;
-      let blockIndex = 0;
-      let lastHighsStartBlockIndex = -1;
+      let rowsCount = 0;
+      let lastRow;
+      let prevRowIndex = 0;
+      let rowIndex = 0;
+      let lastHighsStartRowIndex = -1;
 
       let cellCounter = 0;
       let prevSize = 0;
@@ -249,7 +249,7 @@ new Vue({
       let sourceIndex;
 
       let sortedCounter = 0;
-      let countInLastBlock = 0;
+      let countInLastRow = 0;
       let styles = {};
       let soughtSize;
       let calcSize;
@@ -271,13 +271,13 @@ new Vue({
       }
 
       if (cellCounter < this.getCompleteCellsCount(this.largeCounter)) {
-        const BlocksWithSmallsNHighCounter =
+        const RowsWithSmallsNHighCounter =
           Math.floor(this.smallCounter / 2) + this.highCounter;
         const scalingDownLargeCounter = Math.ceil(
-          (this.largeCounter - BlocksWithSmallsNHighCounter) / 2
+          (this.largeCounter - RowsWithSmallsNHighCounter) / 2
         );
 
-        blocksCount = BlocksWithSmallsNHighCounter + scalingDownLargeCounter;
+        rowsCount = RowsWithSmallsNHighCounter + scalingDownLargeCounter;
 
         if (this.highCounter <= 0 && this.smallCounter <= 0) {
           toSetGridColStart = false;
@@ -285,12 +285,12 @@ new Vue({
 
         isOverlyLarges = true;
       } else {
-        blocksCount = this.getBlocks(cellCounter);
+        rowsCount = this.getRows(cellCounter);
         isIncompleteLarges =
-          this.smallCounter > 0 && this.largeCounter < blocksCount;
+          this.smallCounter > 0 && this.largeCounter < rowsCount;
 
         if (isIncompleteLarges && this.highCounter > 0) {
-          const diff = blocksCount - this.largeCounter;
+          const diff = rowsCount - this.largeCounter;
 
           if (diff < this.highCounter) {
             this.lastHighCounter = diff;
@@ -300,8 +300,8 @@ new Vue({
 
           this.highCounter -= this.lastHighCounter;
 
-          lastHighsStartBlockIndex = blocksCount - diff;
-          isBlockWithHighAsLarge = blockIndex >= lastHighsStartBlockIndex;
+          lastHighsStartRowIndex = rowsCount - diff;
+          isRowWithHighAsLarge = rowIndex >= lastHighsStartRowIndex;
         } else if (
           (this.largeCounter > 0 &&
             this.highCounter > 0 &&
@@ -312,13 +312,13 @@ new Vue({
         }
       }
 
-      lastBlock = blocksCount - 1;
+      lastRow = rowsCount - 1;
 
-      console.log(blocksCount);
-      console.log(lastBlock);
+      console.log(rowsCount);
+      console.log(lastRow);
       console.log(this.highCounter);
       console.log(this.lastHighCounter);
-      console.log(lastHighsStartBlockIndex);
+      console.log(lastHighsStartRowIndex);
       console.log(isOverlyLarges);
       console.log(isIncompleteLarges);
 
@@ -339,9 +339,9 @@ new Vue({
             soughtSize = 1;
           } else if (
             this.isLargeSizeByIndex(evenStepIndex) &&
-            (this.largeCounter > 0 || !isEvenBlock) &&
+            (this.largeCounter > 0 || !isEvenRow) &&
             prevEvenStepIndex - evenStepIndex <= 1 &&
-            (this.largeCounter > 0 || isBlockWithHighAsLarge)
+            (this.largeCounter > 0 || isRowWithHighAsLarge)
           ) {
             if (this.largeCounter > 0) {
               soughtSize = 4;
@@ -351,16 +351,16 @@ new Vue({
             }
           } else if (
             this.isEvenHighSizeByIndex(evenStepIndex) &&
-            isEvenBlock &&
+            isEvenRow &&
             isIncompleteLarges &&
-            isBlockWithHighAsLarge
+            isRowWithHighAsLarge
           ) {
             soughtSize = 2;
             this.isLastHigh = true;
-          } else if (countInLastBlock) {
+          } else if (countInLastRow) {
             soughtSize = 0;
 
-            switch (countInLastBlock) {
+            switch (countInLastRow) {
               case 5:
                 break;
               case 4:
@@ -453,7 +453,7 @@ new Vue({
                 } else if (this.highCounter <= 0 && this.lastHighCounter > 0) {
                   this.highCounter++;
                   this.lastHighCounter--;
-                } else if (blockIndex == lastBlock) {
+                } else if (rowIndex == lastRow) {
                   break;
                 } else if (isOverlyLarges) {
                   soughtSize = 2;
@@ -518,12 +518,12 @@ new Vue({
               switch (calcSize) {
                 case 2:
                   if (
-                    isBlockWithHighAsLarge &&
+                    isRowWithHighAsLarge &&
                     prevSize == 1 &&
-                    cellCounter % this.cellsCountInBlock >= 2
+                    cellCounter % this.cellsCountInRow >= 2
                   ) {
                     if (
-                      isEvenBlock &&
+                      isEvenRow &&
                       !this.isEvenHighSizeByIndex(evenStepIndex)
                     ) {
                       this.cells[this.cells.length - 1].styles[
@@ -537,8 +537,8 @@ new Vue({
                   }
                   break;
                 case 1:
-                  if (isBlockWithHighAsLarge) {
-                    if (isEvenBlock) {
+                  if (isRowWithHighAsLarge) {
+                    if (isEvenRow) {
                       if (
                         this.isLargeCell(evenStepIndex + 4) &&
                         prevSize == 1
@@ -579,32 +579,31 @@ new Vue({
             this.tempArray[sourceIndex].sorted = true;
             sortedCounter++;
 
-            prevBlockIndex = blockIndex;
+            prevRowIndex = rowIndex;
             cellCounter += calcSize;
-            blockIndex = Math.floor(cellCounter / this.cellsCountInBlock);
+            rowIndex = Math.floor(cellCounter / this.cellsCountInRow);
 
-            if (blockIndex > prevBlockIndex) {
-              isBlockWithHighAsLarge =
-                lastHighsStartBlockIndex >= 0 &&
-                blockIndex >= lastHighsStartBlockIndex;
-              isEvenBlock = !isEvenBlock;
+            if (rowIndex > prevRowIndex) {
+              isRowWithHighAsLarge =
+                lastHighsStartRowIndex >= 0 &&
+                rowIndex >= lastHighsStartRowIndex;
+              isEvenRow = !isEvenRow;
 
-              if (blockIndex == lastBlock && isEvenBlock) {
-                countInLastBlock =
-                  (this.smallCounter +
-                    this.highCounter * 2 +
-                    this.lastHighCounter * 2 +
-                    this.largeCounter * 4) %
-                  this.cellsCountInBlock;
-                console.log(countInLastBlock);
+              if (rowIndex == lastRow && isEvenRow) {
+                countInLastRow =
+                  this.smallCounter +
+                  this.highCounter * 2 +
+                  this.lastHighCounter * 2 +
+                  this.largeCounter * 4;
+                console.log(countInLastRow);
 
-                if (countInLastBlock) {
+                if (countInLastRow < this.cellsCountInRow) {
                   if (this.lastHighCounter > 0) {
                     this.highCounter += this.lastHighCounter;
                     this.lastHighCounter = 0;
                   }
 
-                  countInLastBlock = sourceArrayLength - sortedCounter;
+                  countInLastRow = sourceArrayLength - sortedCounter;
                 }
               }
             }
@@ -612,8 +611,8 @@ new Vue({
             if (
               !isShiftedEvenStepIndex &&
               this.largeCounter <= 0 &&
-              blockIndex == lastHighsStartBlockIndex &&
-              isEvenBlock &&
+              rowIndex == lastHighsStartRowIndex &&
+              isEvenRow &&
               isIncompleteLarges
             ) {
               prevEvenStepIndex = evenStepIndex;
