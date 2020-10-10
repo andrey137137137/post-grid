@@ -175,21 +175,17 @@ new Vue({
     decSizeCounter: function (size) {
       switch (size) {
         case 4:
-          // this.largeCounter--;
           this.largeCounter = this.setSizeCounter(this.largeCounter);
           break;
         case 2:
           if (this.isLastHigh) {
-            // this.lastHighCounter--;
             this.lastHighCounter = this.setSizeCounter(this.lastHighCounter);
             this.isLastHigh = false;
           } else {
-            // this.highCounter--;
             this.highCounter = this.setSizeCounter(this.highCounter);
           }
           break;
         case 1:
-          // this.smallCounter--;
           this.smallCounter = this.setSizeCounter(this.smallCounter);
       }
     },
@@ -604,6 +600,8 @@ new Vue({
                   }
 
                   countInLastRow = sourceArrayLength - sortedCounter;
+                } else {
+                  countInLastRow = 0;
                 }
               }
             }
