@@ -20,6 +20,8 @@ ul {
   align-items: center;
   box-sizing: border-box;
   border: 1px solid white;
+  width: 100px;
+  height: 100px;
 }
 
 .cell--col_start_1 {
@@ -45,20 +47,26 @@ ul {
 
 .cell-high {
   grid-row-end: 2 span;
+  height: 200px;
 }
 
 .cell-large--md {
   grid-row-end: 2 span;
+  height: 200px;
 }
 
 .cell-large--lg {
   grid-row-end: 2 span;
   grid-column-end: 2 span;
+  width: 200px;
+  height: 200px;
 }
 
 .cell-large--xl {
   grid-row-end: 2 span;
   grid-column-end: 2 span;
+  width: 200px;
+  height: 200px;
 }
 
 .cell-move {
