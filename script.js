@@ -290,6 +290,10 @@ new Vue({
             this.lastHighCounter = this.highCounter;
           }
 
+          if (this.smallCounter % 2) {
+            this.lastHighCounter--;
+          }
+
           this.highCounter -= this.lastHighCounter;
 
           lastHighsStartRowIndex = rowsCount - diff;
