@@ -9,9 +9,12 @@ new Vue({
     cellHeight: 100,
     cellID: -1,
     breakpoints: {
-      xl: 1200,
-      lg: 922,
-      md: 768,
+      // xl: 1200,
+      // lg: 922,
+      // md: 768,
+      xl: 320,
+      lg: 320,
+      md: 320,
     },
     firstFoundIndexes: {
       large: -1,
@@ -310,8 +313,10 @@ new Vue({
 
       console.log('rowsCount:              ' + rowsCount);
       console.log('lastRow:                ' + lastRow);
+      console.log('smallCounter:           ' + this.smallCounter);
       console.log('highCounter:            ' + this.highCounter);
       console.log('lastHighCounter:        ' + this.lastHighCounter);
+      console.log('largeCounter:           ' + this.largeCounter);
       console.log('lastHighsStartRowIndex: ' + lastHighsStartRowIndex);
       console.log('isOverlyLarges:         ' + isOverlyLarges);
       console.log('isIncompleteLarges:     ' + isIncompleteLarges);
@@ -675,16 +680,10 @@ new Vue({
   },
   created() {
     this.restructe([
+      { sourceSize: 1 },
       { sourceSize: 2 },
       { sourceSize: 2 },
-      { sourceSize: 2 },
-      { sourceSize: 1 },
-      { sourceSize: 1 },
-      { sourceSize: 1 },
-      { sourceSize: 1 },
-      { sourceSize: 1 },
-      { sourceSize: 1 },
-      { sourceSize: 1 },
+      // { sourceSize: 2 },
     ]);
   },
   mounted() {
