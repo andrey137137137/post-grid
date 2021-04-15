@@ -228,10 +228,12 @@ new Vue({
     incTimeOutCounter: function () {
       this.timeOutCounter++;
     },
-    log: function (data) {
+    log: function (data, isStart = false) {
+      const title = isStart ? 'START' : '  ' + this.cells.length + '  ';
       const {
         rowsCount,
         lastRow,
+        countInLastRow,
         isEvenRow,
         prevRowIndex,
         rowIndex,
@@ -250,10 +252,13 @@ new Vue({
       } = data;
 
       console.log(
-        '-----------------------------------------------------------',
+        '=================================' +
+          title +
+          '=================================',
       );
       console.log('rowsCount:              ' + rowsCount);
       console.log('lastRow:                ' + lastRow);
+      console.log('countInLastRow:         ' + countInLastRow);
       console.log('isEvenRow:              ' + isEvenRow);
       console.log('prevRowIndex:           ' + prevRowIndex);
       console.log('rowIndex:               ' + rowIndex);
@@ -278,7 +283,9 @@ new Vue({
       console.log('isOverlyLarges:         ' + isOverlyLarges);
       console.log('isIncompleteLarges:     ' + isIncompleteLarges);
       console.log(
-        '-----------------------------------------------------------',
+        '=================================' +
+          title +
+          '=================================',
       );
     },
     restructe(sourceArray) {
@@ -326,8 +333,8 @@ new Vue({
       let soughtSize;
       let calcSize;
 
-      for (let index = 0; index < sourceArrayLength; index++) {
-        switch (sourceArray[index].sourceSize) {
+      sourceArray.forEach(item => {
+        switch (item.sourceSize) {
           case 4:
             this.largeCounter++;
             break;
@@ -338,9 +345,9 @@ new Vue({
             this.smallCounter++;
         }
 
-        cellCounter += sourceArray[index].sourceSize;
-        this.tempArray.push(sourceArray[index]);
-      }
+        cellCounter += item.sourceSize;
+        this.tempArray.push(item);
+      });
 
       if (cellCounter < this.getCompleteCellsCount(this.largeCounter)) {
         const RowsWithSmallsNHighCounter =
@@ -369,7 +376,7 @@ new Vue({
             this.lastHighCounter = this.highCounter;
           }
 
-          if (this.smallCounter % 2) {
+          if (rowsCount % 2 == 0 && this.smallCounter % 2) {
             this.lastHighCounter--;
           }
 
@@ -387,25 +394,29 @@ new Vue({
 
       lastRow = rowsCount - 1;
 
-      this.log({
-        rowsCount,
-        lastRow,
-        isEvenRow,
-        prevRowIndex,
-        rowIndex,
-        isRowWithHighAsLarge,
-        lastHighsStartRowIndex,
-        prevEvenStepIndex,
-        evenStepIndex,
-        sourceIndex,
-        prevSize,
-        soughtSize,
-        cellCounter,
-        sortedCounter,
-        toSetGridColStart,
-        isOverlyLarges,
-        isIncompleteLarges,
-      });
+      this.log(
+        {
+          rowsCount,
+          lastRow,
+          countInLastRow,
+          isEvenRow,
+          prevRowIndex,
+          rowIndex,
+          isRowWithHighAsLarge,
+          lastHighsStartRowIndex,
+          prevEvenStepIndex,
+          evenStepIndex,
+          sourceIndex,
+          prevSize,
+          soughtSize,
+          cellCounter,
+          sortedCounter,
+          toSetGridColStart,
+          isOverlyLarges,
+          isIncompleteLarges,
+        },
+        true,
+      );
 
       cellCounter = 0;
       this.cells = [];
@@ -534,11 +545,26 @@ new Vue({
           if (!soughtSize && this.tempArray[sourceIndex].sourceSize < 3) {
             soughtSize = this.tempArray[sourceIndex].sourceSize;
 
-            console.log('--------------------------------');
-            console.log(this.lastHighCounter);
-            console.log(this.highCounter);
-            console.log(sourceIndex);
-            console.log(soughtSize);
+            this.log({
+              rowsCount,
+              lastRow,
+              countInLastRow,
+              isEvenRow,
+              prevRowIndex,
+              rowIndex,
+              isRowWithHighAsLarge,
+              lastHighsStartRowIndex,
+              prevEvenStepIndex,
+              evenStepIndex,
+              sourceIndex,
+              prevSize,
+              soughtSize,
+              cellCounter,
+              sortedCounter,
+              toSetGridColStart,
+              isOverlyLarges,
+              isIncompleteLarges,
+            });
 
             switch (soughtSize) {
               case 1:
@@ -550,10 +576,11 @@ new Vue({
                   this.lastHighCounter ||
                   isOverlyLarges
                 ) {
-                  if (this.lastHighCounter) {
-                    this.highCounter++;
-                    this.lastHighCounter--;
-                  } else if (!this.highCounter && isOverlyLarges) {
+                  // if (this.lastHighCounter) {
+                  //   this.highCounter++;
+                  //   this.lastHighCounter--;
+                  // } else
+                  if (!this.highCounter && isOverlyLarges) {
                     toScaleDownBigSizes = true;
                   }
 
@@ -569,7 +596,9 @@ new Vue({
                 }
               case 2:
                 if (soughtSize == 2) {
-                  if (this.highCounter) break;
+                  if (this.highCounter) {
+                    break;
+                  }
                 }
               default:
                 soughtSize = 0;
@@ -578,11 +607,11 @@ new Vue({
                 continue;
             }
 
-            console.log(this.lastHighCounter);
-            console.log(this.highCounter);
-            console.log(this.cellID);
-            console.log(soughtSize);
-            console.log('--------------------------------');
+            // console.log(this.lastHighCounter);
+            // console.log(this.highCounter);
+            // console.log(this.cellID);
+            // console.log(soughtSize);
+            // console.log('--------------------------------');
           }
 
           areSizesMatched =
@@ -798,6 +827,9 @@ new Vue({
   },
   created() {
     this.restructe([
+      { sourceSize: 1 },
+      { sourceSize: 1 },
+      { sourceSize: 1 },
       { sourceSize: 1 },
       { sourceSize: 2 },
       { sourceSize: 2 },
