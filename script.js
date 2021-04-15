@@ -228,33 +228,53 @@ new Vue({
     incTimeOutCounter: function () {
       this.timeOutCounter++;
     },
-    log: function (isEvenRow, rowIndex, soughtSize, sourceIndex) {
+    log: function (data) {
+      const {
+        rowsCount,
+        lastRow,
+        isEvenRow,
+        prevRowIndex,
+        rowIndex,
+        isRowWithHighAsLarge,
+        lastHighsStartRowIndex,
+        prevEvenStepIndex,
+        evenStepIndex,
+        sourceIndex,
+        prevSize,
+        soughtSize,
+        cellCounter,
+        sortedCounter,
+        toSetGridColStart,
+        isOverlyLarges,
+        isIncompleteLarges,
+      } = data;
+
       console.log(
         '-----------------------------------------------------------',
       );
       console.log('rowsCount:              ' + rowsCount);
       console.log('lastRow:                ' + lastRow);
       console.log('isEvenRow:              ' + isEvenRow);
-      console.log('prevRowIndex:                ' + prevRowIndex);
-      console.log('rowIndex:                ' + rowIndex);
-      console.log('isRowWithHighAsLarge: ' + isRowWithHighAsLarge);
+      console.log('prevRowIndex:           ' + prevRowIndex);
+      console.log('rowIndex:               ' + rowIndex);
+      console.log('isRowWithHighAsLarge:   ' + isRowWithHighAsLarge);
       console.log('lastHighsStartRowIndex: ' + lastHighsStartRowIndex);
       console.log('');
-      console.log('prevEvenStepIndex:            ' + prevEvenStepIndex);
-      console.log('evenStepIndex:            ' + evenStepIndex);
+      console.log('prevEvenStepIndex:      ' + prevEvenStepIndex);
+      console.log('evenStepIndex:          ' + evenStepIndex);
       console.log('sourceIndex:            ' + sourceIndex);
       console.log('');
-      console.log('prevSize:             ' + prevSize);
+      console.log('prevSize:               ' + prevSize);
       console.log('soughtSize:             ' + soughtSize);
       console.log('');
-      console.log('cellCounter:           ' + cellCounter);
+      console.log('cellCounter:            ' + cellCounter);
       console.log('smallCounter:           ' + this.smallCounter);
       console.log('highCounter:            ' + this.highCounter);
       console.log('lastHighCounter:        ' + this.lastHighCounter);
       console.log('largeCounter:           ' + this.largeCounter);
-      console.log('sortedCounter:           ' + sortedCounter);
+      console.log('sortedCounter:          ' + sortedCounter);
       console.log('');
-      console.log('toSetGridColStart:         ' + toSetGridColStart);
+      console.log('toSetGridColStart:      ' + toSetGridColStart);
       console.log('isOverlyLarges:         ' + isOverlyLarges);
       console.log('isIncompleteLarges:     ' + isIncompleteLarges);
       console.log(
@@ -367,15 +387,25 @@ new Vue({
 
       lastRow = rowsCount - 1;
 
-      console.log('rowsCount:              ' + rowsCount);
-      console.log('lastRow:                ' + lastRow);
-      console.log('smallCounter:           ' + this.smallCounter);
-      console.log('highCounter:            ' + this.highCounter);
-      console.log('lastHighCounter:        ' + this.lastHighCounter);
-      console.log('largeCounter:           ' + this.largeCounter);
-      console.log('lastHighsStartRowIndex: ' + lastHighsStartRowIndex);
-      console.log('isOverlyLarges:         ' + isOverlyLarges);
-      console.log('isIncompleteLarges:     ' + isIncompleteLarges);
+      this.log({
+        rowsCount,
+        lastRow,
+        isEvenRow,
+        prevRowIndex,
+        rowIndex,
+        isRowWithHighAsLarge,
+        lastHighsStartRowIndex,
+        prevEvenStepIndex,
+        evenStepIndex,
+        sourceIndex,
+        prevSize,
+        soughtSize,
+        cellCounter,
+        sortedCounter,
+        toSetGridColStart,
+        isOverlyLarges,
+        isIncompleteLarges,
+      });
 
       cellCounter = 0;
       this.cells = [];
