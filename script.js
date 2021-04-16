@@ -36,8 +36,12 @@ new Vue({
       return this.timeOutCounter >= this.timeOut;
     },
     cellsCountInRow() {
-      if (this.isLessThenMD) return 1;
-      if (this.isLessThenLG) return 4;
+      if (this.isLessThenMD) {
+        return 1;
+      }
+      if (this.isLessThenLG) {
+        return 4;
+      }
       return 6;
     },
     isLessThenMD() {
@@ -143,17 +147,6 @@ new Vue({
         (this.isLargeCell(index) || this.isLargeCell(index + evenStep))
       );
     },
-    // isEvenHighSizeByIndex(index) {
-    //   if (this.isLessThenMD) {
-    //     return false;
-    //   }
-
-    //   if (this.isLessThenXL) {
-    //     return this.isLargeCell(index);
-    //   }
-
-    //   return this.isLargeCell(index + 2);
-    // },
     getSizeName(size) {
       switch (size) {
         case 1:
@@ -357,7 +350,9 @@ new Vue({
         this.tempArray.push(item);
       });
 
-      if (cellCounter < this.getCompleteCellsCount(this.largeCounter)) {
+      if (cellCounter < this.cellsCountInRow) {
+        countInLastRow = sourceArrayLength;
+      } else if (cellCounter < this.getCompleteCellsCount(this.largeCounter)) {
         const RowsWithSmallsNHighCounter =
           Math.floor(this.smallCounter / 2) + this.highCounter;
         const scalingDownLargeCounter = Math.ceil(
@@ -366,7 +361,7 @@ new Vue({
 
         rowsCount = RowsWithSmallsNHighCounter + scalingDownLargeCounter;
 
-        if (!this.highCounter && !this.smallCounter) {
+        if (this.isOnlyCounter) {
           toSetGridColStart = false;
         }
 
@@ -376,7 +371,13 @@ new Vue({
         isIncompleteLarges = this.smallCounter && this.largeCounter < rowsCount;
 
         if (isIncompleteLarges && this.highCounter) {
-          const diff = rowsCount - this.largeCounter;
+          const isIncompleteLastRow =
+            rowsCount * this.cellsCountInRow - cellCounter;
+          let diff = rowsCount - this.largeCounter;
+
+          if (isIncompleteLastRow) {
+            diff--;
+          }
 
           if (diff < this.highCounter) {
             this.lastHighCounter = diff;
@@ -384,14 +385,14 @@ new Vue({
             this.lastHighCounter = this.highCounter;
           }
 
-          if (rowsCount % 2 == 0 && this.smallCounter % 2) {
-            this.lastHighCounter--;
-          }
-
           this.highCounter -= this.lastHighCounter;
 
+          if (isIncompleteLastRow) {
+            diff++;
+          }
+
           lastHighsStartRowIndex = rowsCount - diff;
-          this.isRowWithHighAsLarge = rowIndex >= lastHighsStartRowIndex;
+          this.isRowWithHighAsLarge = lastHighsStartRowIndex == 0;
         } else if (
           (this.largeCounter && this.highCounter && !this.smallCounter) ||
           this.isOnlyCounter
