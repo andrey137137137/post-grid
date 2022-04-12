@@ -58,6 +58,9 @@ allRestElems: 0,
     isSmallSequence: false,
   },
   computed: {
+getCompleteCellsCount() {
+      return this.largeCounter * 4 + this.largeCounter * 2;
+    },
     lastRow() {
       return this.rowsCount - 1;
     },
@@ -160,9 +163,6 @@ allRestElems: 0,
     },
   },
   methods: {
-    getCompleteCellsCount() {
-      return this.largeCounter * 4 + this.largeCounter * 2;
-    },
     evenBeforeLargeStyle(index) {
       // if (!this.isLessThenXL && this.cells[index].gridColStart) {
       //   styles["grid-column-start"] = this.cells[index].gridColStart;
