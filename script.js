@@ -33,7 +33,7 @@ new Vue({
     tempArray: [],
     rowsCount: 0,
     // lastRow: 0,
-allRestElems: 0,
+    allRestElems: 0,
     restElems: 0,
     isEvenRow: 0,
     prevRowIndex: 0,
@@ -58,7 +58,7 @@ allRestElems: 0,
     isSmallSequence: false,
   },
   computed: {
-getCompleteCellsCount() {
+    getCompleteCellsCount() {
       return this.largeCounter * 4 + this.largeCounter * 2;
     },
     lastRow() {
@@ -543,16 +543,14 @@ getCompleteCellsCount() {
                 console.log(this.restCells);
 
                 if (this.isIncompleteLastRow) {
-                  this.allRestElems = this.sourceArrayLength - this.sortedCounter;
+                  this.restElems = this.sourceArrayLength - this.sortedCounter;
+                  this.allRestElems = this.restElems;
 
                   if (this.lastHighCounter) {
                     this.highCounter += this.lastHighCounter;
                     this.lastHighCounter = 0;
                   }
                 }
-                // else {
-                //   this.restElems = 0;
-                // }
               }
             }
           }
@@ -561,7 +559,7 @@ getCompleteCellsCount() {
           this.styles = {};
 
           this.incTimeOutCounter();
-          break;
+          return;
         } else {
           this.setFirstFoundIndex(
             this.tempArray[this.sourceIndex].sourceSize,
@@ -572,82 +570,68 @@ getCompleteCellsCount() {
         this.incTimeOutCounter();
       }
     },
+    setRestSoughtSize(bigSizeCount, bigSizeValue) {
+      if (this.restElems > bigSizeCount) {
+        this.soughtSize = 1;
+      } else {
+        this.soughtSize = bigSizeValue;
+      }
+    },
     calcIncompleteEvenLastRow() {
       console.log(this.restElems);
-      this.soughtSize = 0;
+      // this.soughtSize = 0;
 
       switch (this.restCells) {
         case 5:
           switch (this.allRestElems) {
             case 4:
-              this.soughtSize = 1;
-this.cells.push({
-            cellCounter: this.cellCounter,
-            key: ++this.cellID,
-            sourceSize: 0,
-            calcSize: 1,
-            styles: this.styles,
-          });
+              this.setRestSoughtSize(1, 2);
               break;
+            case 3:
+              this.setRestSoughtSize(2, 2);
+              break;
+            case 2:
+              this.setRestSoughtSize(1, 4);
           }
           break;
+
         case 4:
-          if (!this.isOnlyCounter) {
-            if (this.smallCounter == 1) {
-              this.soughtSize = 1;
-              this.styles[this.GRID_COLUMN_START] = 2;
-            }
-          } else if (this.highCounter) {
-            this.soughtSize = 2;
+          switch (this.allRestElems) {
+            case 3:
+              this.setRestSoughtSize(1, 2);
+              break;
+            case 2:
+              this.soughtSize = 2;
+              break;
+            case 1:
+              this.soughtSize = 4;
           }
           break;
+
         case 3:
-          if (!this.isOnlyCounter) {
-            if (this.smallCounter == 1) {
-              this.soughtSize = 1;
-            }
-          } else if (this.highCounter) {
-            this.soughtSize = 2;
-          }
+          this.setRestSoughtSize(1, 2);
           break;
+
         case 2:
-          if (!this.isOnlyCounter) {
-            this.soughtSize = 1;
-
-            if (this.highCounter) {
-              this.styles.left = this.cellWidth;
-            }
-          } else if (this.largeCounter) {
-            this.soughtSize = 4;
-          } else if (this.highCounter) {
-            this.styles.left = this.cellWidth;
-            this.soughtSize = 2;
-          }
-          break;
-        case 1:
-          if (this.largeCounter) {
-            this.styles.left = this.cellWidth;
-            this.soughtSize = 4;
-          } else {
-            this.styles.left = this.cellWidth * 2;
-            this.soughtSize = 2;
-          }
+          this.soughtSize = 2;
       }
 
-      if (this.isExist(this.styles, 'left')) {
-        this.styles.left += 'px';
-      }
+      // if (this.isExist(this.styles, 'left')) {
+      //   this.styles.left += 'px';
+      // }
 
-      if (!this.soughtSize) {
-        this.soughtSize = 1;
-        this.isSmallSequence = true;
-      } else if (this.soughtSize > 1) {
-        this.styles.height = this.cellHeight * 2 + 'px';
-      }
+      // if (!this.soughtSize) {
+      //   this.soughtSize = 1;
+      //   this.isSmallSequence = true;
+      // } else if (this.soughtSize > 1) {
+      //   this.styles.height = this.cellHeight * 2 + 'px';
+      // }
 
       if (this.toSetGridColStart && this.soughtSize == 1) {
         this.toSetGridColStart = false;
       }
+
+      this.restElems--;
     },
     restructe(sourceArray) {
       this.config();
@@ -659,7 +643,7 @@ this.cells.push({
       this.smallCounter = 0;
       this.lastHighCounter = 0;
 
-this.allRestElems = 0;
+      this.allRestElems = 0;
       this.restElems = 0;
       this.isEvenRow = 0;
       this.prevRowIndex = 0;
@@ -669,7 +653,7 @@ this.allRestElems = 0;
       this.prevSize = 0;
       this.soughtSize = 0;
       this.sortedCounter = 0;
-      
+
       this.styles = {};
       this.calcSize = 0;
       this.toSetGridColStart = true;
@@ -692,13 +676,13 @@ this.allRestElems = 0;
             this.smallCounter++;
         }
 
-if (item.sourceSize) {
-        this.cellCounter += item.sourceSize;
-        this.tempArray.push(item);
-}
+        if (item.sourceSize) {
+          this.cellCounter += item.sourceSize;
+          this.tempArray.push(item);
+        }
       });
 
-this.sourceArrayLength = this.tempArray.length;
+      this.sourceArrayLength = this.tempArray.length;
 
       this.calcRows();
       this.log(true);
