@@ -33,6 +33,7 @@ new Vue({
     tempArray: [],
     rowsCount: 0,
     // lastRow: 0,
+allRestElems: 0,
     restElems: 0,
     isEvenRow: 0,
     prevRowIndex: 0,
@@ -542,7 +543,7 @@ new Vue({
                 console.log(this.restCells);
 
                 if (this.isIncompleteLastRow) {
-                  this.restElems = this.sourceArrayLength - this.sortedCounter;
+                  this.allRestElems = this.sourceArrayLength - this.sortedCounter;
 
                   if (this.lastHighCounter) {
                     this.highCounter += this.lastHighCounter;
@@ -577,9 +578,16 @@ new Vue({
 
       switch (this.restCells) {
         case 5:
-          switch (this.restElems) {
+          switch (this.allRestElems) {
             case 4:
               this.soughtSize = 1;
+this.cells.push({
+            cellCounter: this.cellCounter,
+            key: ++this.cellID,
+            sourceSize: 0,
+            calcSize: 1,
+            styles: this.styles,
+          });
               break;
           }
           break;
@@ -651,6 +659,7 @@ new Vue({
       this.smallCounter = 0;
       this.lastHighCounter = 0;
 
+this.allRestElems = 0;
       this.restElems = 0;
       this.isEvenRow = 0;
       this.prevRowIndex = 0;
@@ -660,7 +669,7 @@ new Vue({
       this.prevSize = 0;
       this.soughtSize = 0;
       this.sortedCounter = 0;
-      this.sourceArrayLength = sourceArray.length;
+      
       this.styles = {};
       this.calcSize = 0;
       this.toSetGridColStart = true;
@@ -683,9 +692,13 @@ new Vue({
             this.smallCounter++;
         }
 
+if (item.sourceSize) {
         this.cellCounter += item.sourceSize;
         this.tempArray.push(item);
+}
       });
+
+this.sourceArrayLength = this.tempArray.length;
 
       this.calcRows();
       this.log(true);
