@@ -207,9 +207,6 @@ new Vue({
         this.firstFoundIndexes[prop] = index;
       }
     },
-    getRows() {
-      return Math.ceil(this.cellCounter / this.cellsCountInRow);
-    },
     setSizeCounter(counter) {
       counter--;
       return counter > 0 ? counter : 0;
@@ -252,15 +249,14 @@ new Vue({
       this.timeOutCounter++;
     },
     calcRows() {
-      if (this.cellCounter < this.largeCounter * 4 + this.largeCounter * 2) {
-        const ROWS_WITH_SMALLS_N_HIGH_COUNTER =
-          Math.floor(this.smallCounter / 2) + this.highCounter;
-        const SCALING_DOWN_LARGE_COUNTER = Math.ceil(
-          (this.largeCounter - ROWS_WITH_SMALLS_N_HIGH_COUNTER) / 2,
+      if (this.cellCounter < this.largeCounter * 6 - 2) {
+        const SMALLS_N_HIGHS_ROWS =
+          Math.ceil(this.smallCounter / 2) + this.highCounter;
+        const SCALING_DOWN_LARGE_ROWS = Math.ceil(
+          (this.largeCounter - SMALLS_N_HIGHS_ROWS) / 2,
         );
 
-        this.rowsCount =
-          ROWS_WITH_SMALLS_N_HIGH_COUNTER + SCALING_DOWN_LARGE_COUNTER;
+        this.rowsCount = SMALLS_N_HIGHS_ROWS + SCALING_DOWN_LARGE_ROWS;
 
         if (this.isOnlyCounter) {
           this.toSetGridColStart = false;
@@ -271,7 +267,7 @@ new Vue({
         return;
       }
 
-      this.rowsCount = this.getRows();
+      this.rowsCount = Math.ceil(this.cellCounter / this.cellsCountInRow);
       console.log('ROWS: ' + this.rowsCount);
       this.isIncompleteLarges =
         this.smallCounter && this.largeCounter < this.rowsCount;
@@ -792,8 +788,9 @@ new Vue({
       { sourceSize: 1 },
       { sourceSize: 1 },
       { sourceSize: 1 },
-      { sourceSize: 1 },
       { sourceSize: 2 },
+      { sourceSize: 4 },
+      { sourceSize: 4 },
       { sourceSize: 4 },
       { sourceSize: 4 },
       { sourceSize: 4 },
