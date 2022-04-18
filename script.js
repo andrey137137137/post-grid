@@ -49,7 +49,6 @@ new Vue({
     sourceArrayLength: 0,
     styles: {},
     calcSize: 0,
-    // toSetGridColStart: true,
     isOverlyLarges: false,
     isIncompleteLarges: false,
     toScaleDownBigSizes: false,
@@ -97,7 +96,7 @@ new Vue({
     allHighsCounters() {
       return this.highsCounter || this.lastHighsCounter;
     },
-    areNotSmallCounters() {
+    isNotSmallsCounter() {
       return !this.smallsCounter && this.largesCounter && this.allHighsCounters;
     },
     isOnlyCounter() {
@@ -116,7 +115,15 @@ new Vue({
       return sizeTypeCounter == 1 ? true : false;
     },
     toSetGridColStart() {
-      return this.areNotSmallCounters || this.isOnlyCounter;
+      if (this.isOnlyCounter) {
+        return false;
+      }
+
+      if (this.isNotSmallsCounter) {
+        return false;
+      }
+
+      return true;
     },
     firstFoundIndex() {
       return 0;
@@ -282,7 +289,6 @@ new Vue({
       this.soughtSize = 0;
       this.calcSize = 0;
 
-      // this.toSetGridColStart = true;
       this.isOverlyLarges = false;
       this.isIncompleteLarges = false;
       this.toScaleDownBigSizes = false;
@@ -570,20 +576,6 @@ new Vue({
         this.toScaleDownBigSizes = false;
       }
     },
-    // checkGridColStartFlag() {
-    //   if (!this.toSetGridColStart) {
-    //     return;
-    //   }
-
-    //   if (this.isOnlyCounter) {
-    //     this.toSetGridColStart = false;
-    //     return;
-    //   }
-
-    //   if (this.areNotSmallCounters) {
-    //     this.toSetGridColStart = false;
-    //   }
-    // },
     pushToCells() {
       this.cells.push({
         cellCounter: this.cellCounter,
@@ -621,7 +613,6 @@ new Vue({
         console.log(this.styles);
 
         this.pushToCells();
-        this.checkGridColStartFlag();
 
         this.decSizeCounter(this.curSourceSize);
         this.resetFirstFoundIndex(this.calcSize);
@@ -700,10 +691,6 @@ new Vue({
           this.soughtSize = 2;
           this.setGridColumnStart(3);
       }
-
-      // if (this.toSetGridColStart && this.soughtSize == 1) {
-      //   this.toSetGridColStart = false;
-      // }
 
       this.restElems--;
     },
