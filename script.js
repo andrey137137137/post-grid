@@ -37,14 +37,15 @@ new Vue({
     restElems: 0,
     isEvenRow: 0,
     prevRowIndex: 0,
-    rowIndex: 0,
+    // rowIndex: 0,
     lastHighsStartRowIndex: -1,
     // prevEvenStepIndex: 0,
     // evenStepIndex: 0,
     sourceIndex: 0,
     prevSize: 0,
     soughtSize: 0,
-    cellCounter: 0,
+    cellsCounter: 0,
+    tempCellsCounter: 0,
     sortedCounter: 0,
     sourceArrayLength: 0,
     styles: {},
@@ -146,15 +147,15 @@ new Vue({
       }
 
       if (this.isLessThenXL) {
-        return this.isLargeCell(this.cellCounter);
+        return this.isLargeCell(this.cellsCounter);
       }
 
       const EVEN_STEP = this.largesCounter ? 4 : 2;
 
       return (
         (this.largesCounter || this.isRowWithHighAsLarge) &&
-        (this.isLargeCell(this.cellCounter) ||
-          this.isLargeCell(this.cellCounter + EVEN_STEP))
+        (this.isLargeCell(this.cellsCounter) ||
+          this.isLargeCell(this.cellsCounter + EVEN_STEP))
       );
     },
     isLastEvenRow() {
@@ -174,6 +175,9 @@ new Vue({
     },
     areSizesMatched() {
       return this.soughtSize == this.curSourceSize;
+    },
+    rowIndex() {
+      return Math.floor(this.cellsCounter / this.cellsCountInRow);
     },
   },
   methods: {
@@ -240,7 +244,7 @@ new Vue({
       switch (size) {
         case 4:
           this.largesCounter = this.setSizeCounter(this.largesCounter);
-          break;
+          return;
         case 2:
           if (this.isLastHigh) {
             this.lastHighsCounter = this.setSizeCounter(this.lastHighsCounter);
@@ -248,7 +252,7 @@ new Vue({
           } else {
             this.highsCounter = this.setSizeCounter(this.highsCounter);
           }
-          break;
+          return;
         case 1:
           this.smallsCounter = this.setSizeCounter(this.smallsCounter);
       }
@@ -279,7 +283,7 @@ new Vue({
 
       this.isEvenRow = 0;
       this.prevRowIndex = 0;
-      this.rowIndex = 0;
+      // this.rowIndex = 0;
       this.lastHighsStartRowIndex = -1;
 
       this.sourceIndex = 0;
@@ -302,7 +306,7 @@ new Vue({
       console.log('TIME_OUT_COUNTER AFTER: ' + this.timeOutCounter);
     },
     calcRowsWhenOverlyLarges() {
-      if (this.cellCounter >= this.largesCounter * 6 - 2) {
+      if (this.tempCellsCounter >= this.largesCounter * 6 - 2) {
         return;
       }
 
@@ -326,7 +330,7 @@ new Vue({
       }
 
       const IS_INCOMPLETE_LAST_ROW =
-        this.rowsCount * this.cellsCountInRow - this.cellCounter;
+        this.rowsCount * this.cellsCountInRow - this.tempCellsCounter;
       let diff = this.rowsCount - this.largesCounter;
 
       if (IS_INCOMPLETE_LAST_ROW) {
@@ -356,7 +360,7 @@ new Vue({
         return;
       }
 
-      this.rowsCount = Math.ceil(this.cellCounter / this.cellsCountInRow);
+      this.rowsCount = Math.ceil(this.tempCellsCounter / this.cellsCountInRow);
       console.log('ROWS: ' + this.rowsCount);
       this.configWhenIncompleteLarges();
     },
@@ -384,7 +388,8 @@ new Vue({
       console.log('prevSize:               ' + this.prevSize);
       console.log('soughtSize:             ' + this.soughtSize);
       console.log('');
-      console.log('cellCounter:            ' + this.cellCounter);
+      console.log('tempCellsCounter:       ' + this.tempCellsCounter);
+      console.log('cellsCounter:           ' + this.cellsCounter);
       console.log('smallsCounter:          ' + this.smallsCounter);
       console.log('highsCounter:           ' + this.highsCounter);
       console.log('lastHighsCounter:       ' + this.lastHighsCounter);
@@ -424,7 +429,7 @@ new Vue({
           if (
             this.isRowWithHighAsLarge &&
             this.prevSize == 1 &&
-            this.cellCounter % this.cellsCountInRow >= 2
+            this.cellsCounter % this.cellsCountInRow >= 2
           ) {
             if (this.isEvenRow && !this.isLargeSizeByIndex) {
               this.setGridColumnStart(1, true);
@@ -432,59 +437,65 @@ new Vue({
               this.setGridColumnStart(2, true);
             }
           }
-          break;
+          return;
         case 1:
           if (this.isRowWithHighAsLarge) {
             if (this.isEvenRow) {
               if (
-                this.isLargeCell(this.cellCounter + 4) &&
+                this.isLargeCell(this.cellsCounter + 4) &&
                 this.prevSize == 1
               ) {
                 this.setGridColumnStart(1);
-              } else if (this.isLargeCell(this.cellCounter + 3)) {
+              } else if (this.isLargeCell(this.cellsCounter + 3)) {
                 this.setGridColumnStart(2);
               }
             }
           } else if (
             // this.isLargeCell(this.evenStepIndex + 2)
-            this.isLargeCell(this.cellCounter + 5)
+            this.isLargeCell(this.cellsCounter + 5)
           ) {
             this.setGridColumnStart(1);
           }
       }
     },
     checkNextRow() {
-      if (this.rowIndex > this.prevRowIndex) {
-        this.isRowWithHighAsLarge =
-          this.lastHighsStartRowIndex >= 0 &&
-          this.rowIndex >= this.lastHighsStartRowIndex;
-        this.isEvenRow = !this.isEvenRow;
+      if (this.rowIndex <= this.prevRowIndex) {
+        return;
+      }
 
-        if (this.isLastEvenRow) {
-          if (this.isOnlyCounter && this.smallsCounter) {
-            this.isSmallSequence = true;
-          } else {
-            this.allRestCells =
-              this.smallsCounter +
-              this.highsCounter * 2 +
-              this.lastHighsCounter * 2 +
-              this.largesCounter * 4;
-            console.log(this.allRestCells);
+      this.isRowWithHighAsLarge =
+        this.lastHighsStartRowIndex >= 0 &&
+        this.rowIndex >= this.lastHighsStartRowIndex;
+      this.isEvenRow = !this.isEvenRow;
 
-            if (this.isIncompleteLastRow) {
-              console.log(this.sourceArrayLength);
-              console.log(this.sortedCounter);
-              this.restElems = this.sourceArrayLength - this.sortedCounter;
-              console.log(this.restElems);
-              this.allRestElems = this.restElems;
+      if (!this.isLastEvenRow) {
+        return;
+      }
 
-              if (this.lastHighsCounter) {
-                this.highsCounter += this.lastHighsCounter;
-                this.lastHighsCounter = 0;
-              }
-            }
-          }
-        }
+      if (this.isOnlyCounter && this.smallsCounter) {
+        this.isSmallSequence = true;
+        return;
+      }
+
+      this.allRestCells =
+        this.smallsCounter +
+        this.highsCounter * 2 +
+        this.lastHighsCounter * 2 +
+        this.largesCounter * 4;
+      console.log(this.allRestCells);
+
+      if (this.isIncompleteLastRow) {
+        console.log(this.sourceArrayLength);
+        console.log(this.sortedCounter);
+        this.restElems = this.sourceArrayLength - this.sortedCounter;
+        console.log(this.restElems);
+        this.allRestElems = this.restElems;
+        return;
+      }
+
+      if (this.lastHighsCounter) {
+        this.highsCounter += this.lastHighsCounter;
+        this.lastHighsCounter = 0;
       }
     },
     isFoundUnknownSize() {
@@ -497,7 +508,6 @@ new Vue({
       }
 
       this.soughtSize = this.curSourceSize;
-
       this.log();
 
       switch (this.soughtSize) {
@@ -527,27 +537,26 @@ new Vue({
           ) {
             return false;
           }
+
         case 2:
           if (this.soughtSize == 2 && this.highsCounter) {
             return false;
           }
+
         default:
           this.soughtSize = 0;
           this.incTimeOutCounter();
           return true;
       }
     },
-    setFoundCalcSize() {
-      this.calcSize = this.curSourceSize;
-    },
     setCalcSize() {
       if (!this.toScaleDownBigSizes) {
-        this.setFoundCalcSize();
+        this.calcSize = this.curSourceSize;
         return;
       }
 
       if (this.areSizesMatched) {
-        this.setFoundCalcSize();
+        this.calcSize = this.curSourceSize;
       } else {
         switch (this.curSourceSize) {
           case 4:
@@ -578,7 +587,7 @@ new Vue({
     },
     pushToCells() {
       this.cells.push({
-        cellCounter: this.cellCounter,
+        cellsCounter: this.cellsCounter,
         key: this.isExist(this.curElem, 'key')
           ? this.curElem.key
           : ++this.cellID,
@@ -613,6 +622,7 @@ new Vue({
         console.log(this.styles);
 
         this.pushToCells();
+        this.toRepeatSearch = false;
 
         this.decSizeCounter(this.curSourceSize);
         this.resetFirstFoundIndex(this.calcSize);
@@ -620,8 +630,8 @@ new Vue({
         this.sortedCounter++;
 
         this.prevRowIndex = this.rowIndex;
-        this.cellCounter += this.calcSize;
-        this.rowIndex = Math.floor(this.cellCounter / this.cellsCountInRow);
+        this.cellsCounter += this.calcSize;
+        // this.rowIndex = Math.floor(this.cellsCounter / this.cellsCountInRow);
 
         this.checkNextRow();
 
@@ -699,9 +709,11 @@ new Vue({
       this.highsCounter = 0;
       this.smallsCounter = 0;
       this.lastHighsCounter = 0;
-      this.cellCounter = 0;
+      this.cellsCounter = 0;
+      this.tempCellsCounter = 0;
 
-      console.log('cellCounter: ' + this.cellCounter);
+      console.log('cellsCounter:     ' + this.cellsCounter);
+      console.log('tempCellsCounter: ' + this.tempCellsCounter);
 
       sourceArray.forEach(item => {
         switch (item.sourceSize) {
@@ -716,7 +728,7 @@ new Vue({
         }
 
         if (item.sourceSize) {
-          this.cellCounter += item.sourceSize;
+          this.tempCellsCounter += item.sourceSize;
           this.tempArray.push(item);
         }
       });
@@ -780,7 +792,7 @@ new Vue({
       this.calcRows();
       this.log(true);
 
-      this.cellCounter = 0;
+      this.tempCellsCounter = 0;
       this.cells = [];
 
       // ---------------------------------- BEGIN WHILE ---------------------------------
