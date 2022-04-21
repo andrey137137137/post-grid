@@ -127,19 +127,19 @@ new Vue({
       return true;
     },
     firstFoundIndex() {
-      return 0;
+      // return 0;
 
-      // if (!this.soughtSize) {
-      //   return 0;
-      // }
+      if (!this.soughtSize) {
+        return 0;
+      }
 
-      // const prop = this.getSizeName(this.soughtSize);
+      const PROP = this.getSizeName(this.soughtSize);
 
-      // if (this.firstFoundIndexes[prop] < 0) {
-      //   return 0;
-      // }
+      if (this.firstFoundIndexes[PROP] < 0) {
+        return 0;
+      }
 
-      // return this.firstFoundIndexes[prop];
+      return this.firstFoundIndexes[PROP];
     },
     isLargeSizeByIndex() {
       if (this.isLessThenMD || (this.isOnlyCounter && this.smallsCounter)) {
@@ -273,6 +273,10 @@ new Vue({
       } else {
         this.cols = 1;
       }
+
+      this.firstFoundIndexes.large = -1;
+      this.firstFoundIndexes.high = -1;
+      this.firstFoundIndexes.small = -1;
 
       this.tempArray = [];
       this.styles = {};
@@ -809,6 +813,10 @@ new Vue({
         if (this.sourceIndex >= this.sourceArrayLength) {
           if (this.soughtSize) {
             this.toRepeatSearch = !this.toRepeatSearch;
+            console.log(
+              '------------------------------TO_REPEAT_SEARCH------------------------------: ' +
+                this.toRepeatSearch,
+            );
           }
 
           if (!this.toRepeatSearch) {
