@@ -1,6 +1,16 @@
 new Vue({
   el: '#post-grid-demo',
   data: {
+    toShow: {
+      styles: false,
+      log: true,
+      rows: false,
+      repeatSearch: false,
+      timeOut: false,
+      lastRow: false,
+      cellsCounter: false,
+      totalWidth: true,
+    },
     timeOut: 1500,
     timeOutCounter: 0,
     isRowWithHighAsLarge: false,
@@ -193,21 +203,18 @@ new Vue({
       return this.cells[index].styles;
     },
     classes(index) {
+      const { sourceSize, calcSize } = this.cells[index];
       return {
         cell: true,
-        'cell-small': this.cells[index].sourceSize == 1,
-        'cell-high--bg': this.cells[index].sourceSize == 2,
-        'cell-large--bg': this.cells[index].sourceSize == 4,
-        'cell-high': !this.isLessThenXL && this.cells[index].calcSize == 2,
+        'cell-small': sourceSize == 1,
+        'cell-high--bg': sourceSize == 2,
+        'cell-large--bg': sourceSize == 4,
+        'cell-high': !this.isLessThenXL && calcSize == 2,
         'cell-large--md':
-          !this.isLessThenMD &&
-          this.isLessThenLG &&
-          this.cells[index].calcSize == 4,
+          !this.isLessThenMD && this.isLessThenLG && calcSize == 4,
         'cell-large--lg':
-          !this.isLessThenLG &&
-          this.isLessThenXL &&
-          this.cells[index].calcSize == 4,
-        'cell-large--xl': !this.isLessThenXL && this.cells[index].calcSize == 4,
+          !this.isLessThenLG && this.isLessThenXL && calcSize == 4,
+        'cell-large--xl': !this.isLessThenXL && calcSize == 4,
       };
     },
     isLargeCell(index) {
@@ -229,33 +236,26 @@ new Vue({
     resetFirstFoundIndex(size) {
       this.firstFoundIndexes[this.getSizeName(size)] = -1;
     },
-    setFirstFoundIndex(size, index) {
-      const prop = this.getSizeName(size);
+    setFirstFoundIndex() {
+      const prop = this.getSizeName(this.curSourceSize);
 
       if (this.firstFoundIndexes[prop] < 0) {
-        this.firstFoundIndexes[prop] = index;
+        this.firstFoundIndexes[prop] = this.sourceIndex;
       }
     },
-    setSizeCounter(counter) {
+    setSizeCounter(counterNamePrefix) {
+      const COUNTER_NAME = counterNamePrefix + 'sCounter';
+      let counter = this[COUNTER_NAME];
       counter--;
-      return counter > 0 ? counter : 0;
+      this[COUNTER_NAME] = counter > 0 ? counter : 0;
     },
-    decSizeCounter(size) {
-      switch (size) {
-        case 4:
-          this.largesCounter = this.setSizeCounter(this.largesCounter);
-          return;
-        case 2:
-          if (this.isLastHigh) {
-            this.lastHighsCounter = this.setSizeCounter(this.lastHighsCounter);
-            this.isLastHigh = false;
-          } else {
-            this.highsCounter = this.setSizeCounter(this.highsCounter);
-          }
-          return;
-        case 1:
-          this.smallsCounter = this.setSizeCounter(this.smallsCounter);
+    decSizeCounter() {
+      if (this.isLastHigh) {
+        this.setSizeCounter('lastHigh');
+        this.isLastHigh = false;
+        return;
       }
+      this.setSizeCounter(this.getSizeName(this.curSourceSize));
     },
     isExist(obj, prop) {
       return Object.prototype.hasOwnProperty.call(obj, prop);
@@ -305,9 +305,13 @@ new Vue({
       this.toRepeatSearch = false;
     },
     incTimeOutCounter() {
-      console.log('TIME_OUT_COUNTER BEFORE: ' + this.timeOutCounter);
+      if (this.toShow.timeOut) {
+        console.log('TIME_OUT_COUNTER BEFORE: ' + this.timeOutCounter);
+      }
       this.timeOutCounter++;
-      console.log('TIME_OUT_COUNTER AFTER: ' + this.timeOutCounter);
+      if (this.toShow.timeOut) {
+        console.log('TIME_OUT_COUNTER AFTER: ' + this.timeOutCounter);
+      }
     },
     calcRowsWhenOverlyLarges() {
       if (this.tempCellsCounter >= this.largesCounter * 6 - 2) {
@@ -360,15 +364,23 @@ new Vue({
       this.calcRowsWhenOverlyLarges();
 
       if (this.isOverlyLarges) {
-        console.log('ROWS: ' + this.rowsCount);
+        if (this.toShow.rows) {
+          console.log('ROWS: ' + this.rowsCount);
+        }
         return;
       }
 
       this.rowsCount = Math.ceil(this.tempCellsCounter / this.cellsCountInRow);
-      console.log('ROWS: ' + this.rowsCount);
+      if (this.toShow.rows) {
+        console.log('ROWS: ' + this.rowsCount);
+      }
       this.configWhenIncompleteLarges();
     },
     log(isStart = false) {
+      if (!this.toShow.log) {
+        return;
+      }
+
       const title = isStart ? 'START' : '  ' + this.cells.length + '  ';
 
       console.log(
@@ -486,13 +498,19 @@ new Vue({
         this.highsCounter * 2 +
         this.lastHighsCounter * 2 +
         this.largesCounter * 4;
-      console.log(this.allRestCells);
+      if (this.toShow.lastRow) {
+        console.log(this.allRestCells);
+      }
 
       if (this.isIncompleteLastRow) {
-        console.log(this.sourceArrayLength);
-        console.log(this.sortedCounter);
+        if (this.toShow.lastRow) {
+          console.log(this.sourceArrayLength);
+          console.log(this.sortedCounter);
+        }
         this.restElems = this.sourceArrayLength - this.sortedCounter;
-        console.log(this.restElems);
+        if (this.toShow.lastRow) {
+          console.log(this.restElems);
+        }
         this.allRestElems = this.restElems;
         return;
       }
@@ -616,19 +634,21 @@ new Vue({
         }
 
         if (!this.areSizesMatched && !this.toScaleDownBigSizes) {
-          this.setFirstFoundIndex(this.curSourceSize, this.sourceIndex);
+          this.setFirstFoundIndex();
           this.incTimeOutCounter();
           continue;
         }
 
         this.setCalcSize();
         this.setStyles();
-        console.log(this.styles);
+        if (this.toShow.styles) {
+          console.log(this.styles);
+        }
 
         this.pushToCells();
         this.toRepeatSearch = false;
 
-        this.decSizeCounter(this.curSourceSize);
+        this.decSizeCounter();
         this.resetFirstFoundIndex(this.calcSize);
         this.curElem.sorted = true;
         this.sortedCounter++;
@@ -661,8 +681,10 @@ new Vue({
       }
     },
     calcIncompleteEvenLastRow() {
-      console.log(this.allRestCells);
-      console.log(this.restElems);
+      if (this.toShow.lastRow) {
+        console.log(this.allRestCells);
+        console.log(this.restElems);
+      }
 
       switch (this.allRestCells) {
         case 5:
@@ -716,8 +738,10 @@ new Vue({
       this.cellsCounter = 0;
       this.tempCellsCounter = 0;
 
-      console.log('cellsCounter:     ' + this.cellsCounter);
-      console.log('tempCellsCounter: ' + this.tempCellsCounter);
+      if (this.toShow.cellsCounter) {
+        console.log('cellsCounter:     ' + this.cellsCounter);
+        console.log('tempCellsCounter: ' + this.tempCellsCounter);
+      }
 
       sourceArray.forEach(item => {
         switch (item.sourceSize) {
@@ -813,10 +837,12 @@ new Vue({
         if (this.sourceIndex >= this.sourceArrayLength) {
           if (this.soughtSize) {
             this.toRepeatSearch = !this.toRepeatSearch;
-            console.log(
-              '------------------------------TO_REPEAT_SEARCH------------------------------: ' +
-                this.toRepeatSearch,
-            );
+            if (this.toShow.repeatSearch) {
+              console.log(
+                '------------------------------TO_REPEAT_SEARCH------------------------------: ' +
+                  this.toRepeatSearch,
+              );
+            }
           }
 
           if (!this.toRepeatSearch) {
@@ -850,6 +876,27 @@ new Vue({
 
       // ----------------------------------- END WHILE ----------------------------------
     },
+    resizeOn() {
+      if (this.toShow.totalWidth) {
+        console.log('WINDOW: ' + window.innerWidth);
+      }
+      if (this.totalWidth == window.innerWidth) {
+        if (this.toShow.totalWidth) {
+          console.log('WINDOW if: ' + window.innerWidth);
+        }
+        return;
+      }
+
+      if (this.timeoutID) {
+        clearTimeout(this.timeoutID);
+      }
+
+      const $vm = this;
+
+      this.timeoutID = setTimeout(() => {
+        $vm.restructe($vm.cells);
+      }, 500);
+    },
   },
   created() {
     this.restructe([
@@ -868,14 +915,6 @@ new Vue({
     ]);
   },
   mounted() {
-    $vm = this;
-    window.addEventListener('resize', function () {
-      if ($vm.timeoutID) {
-        clearTimeout($vm.timeoutID);
-      }
-      $vm.timeoutID = setTimeout(function () {
-        $vm.restructe($vm.cells);
-      }, 500);
-    });
+    window.addEventListener('resize', this.resizeOn);
   },
 });
